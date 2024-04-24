@@ -8,9 +8,8 @@ app.use(express.json());
 
 const path = require('path');
 app.use(express.static(path.join(__dirname, '../client/dist')));
-
-require('dotenv').config();
-console.log(process.env.DB_HOST); // Use environment variables like this
+//require('dotenv').config();
+//console.log(process.env.DB_HOST); // Use environment variables like this
 
 
 const PORT = process.env.PORT || 3000;
