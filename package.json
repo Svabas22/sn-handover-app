@@ -1,0 +1,26 @@
+{
+  "name": "server",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "start-frontend": "cd client && npm start",
+    "start-backend": "node server/server.js",
+    "dev": "nodemon server/server.js",
+    "build-frontend": "cd client && npm run build",
+    "install-frontend": "cd client && npm install",
+    "build": "npm run install-frontend && npm run build-frontend"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "axios": "^1.6.8",
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.5",
+    "express": "^4.19.2"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.0"
+  }
+}
