@@ -16,15 +16,35 @@ app.use(express.static(path.join(__dirname, '../client/dist')));
 const endpoint = process.env.COSMOS_DB_ENDPOINT;
 const key = process.env.COSMOS_DB_KEY;
 
+const databaseId = "handoversys";
+const containerId = "snRecords";
+
 const client = new CosmosClient({ endpoint, key });
 app.use(morgan('combined'));
-app.get('/status', (req,res) =>{
-  res.send(
-    {
-      message: 'hello'
-    }
-  )
-})
+app.post('/api/records', async (req, res) => {
+  const { name, comment } = req.body;
+  try {
+    const { database } = await client.databases.createIfNotExists({ id: databaseId });
+    const { container } = await database.containers.createIfNotExists({ id: containerId });
+    const { resource: createdItem } = await container.items.create({ name, comment });
+    res.status(201).json(createdItem);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+app.get('/api/records', async (req, res) => {
+  try {
+    const { database } = await client.databases.createIfNotExists({ id: databaseId });
+    const { container } = await database.containers.createIfNotExists({ id: containerId });
+    const { resources: items } = await container.items
+      .query("SELECT * from c")
+      .fetchAll();
+    res.status(200).json(items);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
 
 
 
