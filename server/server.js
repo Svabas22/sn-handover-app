@@ -2,23 +2,44 @@ require('dotenv').config();
 process.env["NODE_TLS_REJECT_UNAUTHORIZED"] = 0;
 const express = require('express');
 const cors = require('cors');
-const { CosmosClient } = require("@azure/cosmos");
-const app = express();
-
-app.use(cors());
-app.use(express.json());
-
 const path = require('path');
+var session = require('express-session');
+var createError = require('http-errors');
+var cookieParser = require('cookie-parser');
+
 const morgan = require('morgan');
-app.use(express.static(path.join(__dirname, '../client/dist')));
 
-//console.log(process.env.DB_HOST); // Use environment variables like this
+var indexRouter = require('./routes/index');
+var usersRouter = require('./routes/users');
+var authRouter = require('./routes/auth');
 
+const { CosmosClient } = require("@azure/cosmos");
 const endpoint = process.env.COSMOS_DB_ENDPOINT;
 const key = process.env.COSMOS_DB_KEY;
-
 const databaseId = "handoversys";
 const containerId = "snRecords";
+
+
+const app = express();
+app.use(cors());
+app.use(express.json());
+app.use(cookieParser());
+app.use(express.urlencoded({ extended: false }));
+
+app.use(session({
+  secret: process.env.EXPRESS_SESSION_SECRET,
+  resave: false,
+  saveUninitialized: false,
+  cookie: {
+      httpOnly: true,
+      secure: false, // set this to true on production
+  }
+}));
+
+app.use(express.static(path.join(__dirname, '../client/dist')));
+app.use('/', indexRouter);
+app.use('/users', usersRouter);
+app.use('/auth', authRouter);
 
 const client = new CosmosClient({ endpoint, key });
 app.use(morgan('combined'));
@@ -46,7 +67,6 @@ app.get('/api/records', async (req, res) => {
     res.status(500).json({ error: error.message });
   }
 });
-
 
 
 const PORT = process.env.PORT || 3000;
