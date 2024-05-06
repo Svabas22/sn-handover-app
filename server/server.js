@@ -5,6 +5,8 @@ const cors = require('cors');
 const path = require('path');
 var session = require('express-session');
 var createError = require('http-errors');
+const http = require('http');
+const socketIo = require('socket.io');
 var cookieParser = require('cookie-parser');
 
 const morgan = require('morgan');
@@ -19,12 +21,14 @@ const key = process.env.COSMOS_DB_KEY;
 const databaseId = "handoversys";
 const containerId = "snRecords";
 
-
 const app = express();
+const server = http.createServer(app);
+const io = socketIo(server);
 app.use(cors());
 app.use(express.json());
 app.use(cookieParser());
 app.use(express.urlencoded({ extended: false }));
+
 
 app.use(session({
   secret: process.env.EXPRESS_SESSION_SECRET,
@@ -41,6 +45,7 @@ app.use('/', indexRouter);
 app.use('/users', usersRouter);
 app.use('/auth', authRouter);
 
+//Cosmos DB config
 const client = new CosmosClient({ endpoint, key });
 app.use(morgan('combined'));
 app.post('/api/records', async (req, res) => {
@@ -54,6 +59,21 @@ app.post('/api/records', async (req, res) => {
     res.status(500).json({ error: error.message });
   }
 });
+
+//Socket IO
+io.on('connection', (socket) => {
+  console.log('A user connected');
+
+  socket.on('disconnect', () => {
+      console.log('User disconnected');
+  });
+
+  socket.on('message', (msg) => {
+      console.log('Message received: ' + msg);
+      io.emit('message', msg); // Broadcasting the message to all clients
+  });
+});
+
 
 app.get('/api/records', async (req, res) => {
   try {

@@ -16,6 +16,7 @@
   "license": "ISC",
   "dependencies": {
     "@azure/msal-node": "^2.7.0",
+    "@microsoft/signalr": "^8.0.0",
     "axios": "^1.6.8",
     "body-parser": "^1.20.2",
     "cookie-parser": "^1.4.6",
@@ -26,7 +27,8 @@
     "hbs": "^4.2.0",
     "http-errors": "^2.0.0",
     "passport": "^0.7.0",
-    "passport-azure-ad": "^4.3.5"
+    "passport-azure-ad": "^4.3.5",
+    "socket.io": "^4.7.5"
   },
   "devDependencies": {
     "@azure/cosmos": "^4.0.0",
