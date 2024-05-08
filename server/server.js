@@ -64,13 +64,16 @@ app.post('/api/records', async (req, res) => {
 io.on('connection', (socket) => {
   console.log('A user connected');
 
-  socket.on('disconnect', () => {
-      console.log('User disconnected');
+  // Listening for an event from the client about the new record
+  socket.on('createRecord', (newRecord) => {
+      // Here you can also add the new record to the database if not already done
+
+      // Broadcast the new record to all clients except the sender
+      socket.broadcast.emit('recordCreated', newRecord);
   });
 
-  socket.on('message', (msg) => {
-      console.log('Message received: ' + msg);
-      io.emit('message', msg); // Broadcasting the message to all clients
+  socket.on('disconnect', () => {
+      console.log('User disconnected');
   });
 });
 

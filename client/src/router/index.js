@@ -1,10 +1,11 @@
 import { createRouter, createWebHistory } from 'vue-router';
-import formTest from '@/components/formTest';
+//import formTest from '@/components/formTest';
+import TestingCards from '@/components/testingCards';
 
 const router = createRouter({
   history: createWebHistory(),
   routes: [
-    { path: '/', name: 'formTest', component: formTest }
+    { path: '/', name: 'TestingCards', component: TestingCards }
   ]
 });
 
