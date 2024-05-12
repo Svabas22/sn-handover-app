@@ -30,25 +30,56 @@
         </ul>
         <form class="d-flex" role="search">
           <input class="form-control me-2" type="search" placeholder="Search" aria-label="Search">
-          <button class="btn btn-outline-success" type="submit">Search</button>
         </form>
+        <ul class="navbar-nav">
+          <li class="nav-item dropdown">
+            <a class="nav-link dropdown-toggle" href="#" id="navbarDropdownMenuLink" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                {{ userProfile.displayName }}
+              </a>
+              <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="navbarDropdownMenuLink">
+                <li><a class="dropdown-item" href="#">{{ userProfile.displayName }}</a></li>
+              <li><a class="dropdown-item" href="#">View account</a></li>
+              <li><a class="dropdown-item" href="#">Switch directory</a></li>
+              <li><hr class="dropdown-divider"></li>
+              <li><a class="dropdown-item" href="#">Sign out</a></li>
+            </ul>
+          </li>
+        </ul>
       </div>
     </div>
   </nav>
 </template>
   
   <script>
-  export default {
-    name: 'NavbarComponent',
-    data() {
-      return {
-        showDropdown: false,
-      }
-    },
+import axios from 'axios';
+export default {
+  name: 'NavbarComponent',
+  data() {
+    return {
+      userProfile: { displayName: '' },
+    };
+  },
+  methods: {
+  async fetchUserClaims() {
+    try {
+      const response = await axios.get('/api/userclaims');
+      console.log(response.data);
+      this.userClaims = response.data;
+      this.userProfile.displayName = response.data.name;
+
+    } catch (error) {
+      console.error("Error fetching user claims", error);
+    }
   }
+  },
+  mounted() {
+    this.fetchUserClaims();
+  }
+};
   </script>
   
   <style scoped>
+  
   nav {
     padding: 10px;
   }
@@ -73,5 +104,9 @@
   
   li a:hover {
     background-color: #ffffff57;
+  }
+  .navbar-nav img {
+    vertical-align: middle;
+    border-radius: 50%; 
   }
   </style>./Navbar.vue

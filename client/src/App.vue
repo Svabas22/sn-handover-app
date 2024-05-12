@@ -2,7 +2,9 @@
   <div id="app-container">
     <NavbarComponent />
     <div class="main-container">
-      <SidebarComponent />
+      <aside class="sidebar">
+        <SidebarComponent />
+      </aside>
       <RouterView />
     </div>
   </div>

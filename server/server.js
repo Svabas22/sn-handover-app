@@ -77,7 +77,6 @@ io.on('connection', (socket) => {
   });
 });
 
-
 app.get('/api/records', async (req, res) => {
   try {
     const { database } = await client.databases.createIfNotExists({ id: databaseId });

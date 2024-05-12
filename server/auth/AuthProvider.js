@@ -3,6 +3,8 @@ const axios = require('axios');
 
 const { msalConfig } = require('../authConfig');
 
+
+
 class AuthProvider {
     msalConfig;
     cryptoProvider;
@@ -80,30 +82,26 @@ class AuthProvider {
         return async (req, res, next) => {
             try {
                 const msalInstance = this.getMsalInstance(this.msalConfig);
-
-                /**
-                 * If a token cache exists in the session, deserialize it and set it as the 
-                 * cache for the new MSAL CCA instance. For more, see: 
-                 * https://github.com/AzureAD/microsoft-authentication-library-for-js/blob/dev/lib/msal-node/docs/caching.md
-                 */
                 if (req.session.tokenCache) {
                     msalInstance.getTokenCache().deserialize(req.session.tokenCache);
                 }
+
+                console.log(req.session.account);
 
                 const tokenResponse = await msalInstance.acquireTokenSilent({
                     account: req.session.account,
                     scopes: options.scopes || [],
                 });
-
-                /**
-                 * On successful token acquisition, write the updated token 
-                 * cache back to the session. For more, see: 
-                 * https://github.com/AzureAD/microsoft-authentication-library-for-js/blob/dev/lib/msal-node/docs/caching.md
-                 */
                 req.session.tokenCache = msalInstance.getTokenCache().serialize();
                 req.session.accessToken = tokenResponse.accessToken;
                 req.session.idToken = tokenResponse.idToken;
                 req.session.account = tokenResponse.account;
+
+                req.session.user = {
+                    username: tokenResponse.account.username,
+                    name: tokenResponse.account.name,
+                    email: tokenResponse.account.username
+                };
 
                 res.redirect(options.successRedirect);
             } catch (error) {
@@ -145,6 +143,11 @@ class AuthProvider {
                 req.session.idToken = tokenResponse.idToken;
                 req.session.account = tokenResponse.account;
                 req.session.isAuthenticated = true;
+                req.session.user = {
+                    username: tokenResponse.account.username,
+                    name: tokenResponse.account.name,
+                    email: tokenResponse.account.username
+                };
 
                 const state = JSON.parse(this.cryptoProvider.base64Decode(req.body.state));
                 res.redirect(state.successRedirect);

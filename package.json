@@ -26,6 +26,7 @@
     "express-session": "^1.18.0",
     "hbs": "^4.2.0",
     "http-errors": "^2.0.0",
+    "jwt-decode": "^4.0.0",
     "passport": "^0.7.0",
     "passport-azure-ad": "^4.3.5",
     "socket.io": "^4.7.5"

@@ -1,5 +1,5 @@
 <template>
-    <aside>
+    <div class="sidebar-comp">
     <div class="d-flex flex-column flex-shrink-0 p-3 bg-light" style="width: 280px;">
       <a href="/" class="d-flex align-items-center mb-3 mb-md-0 me-md-auto link-dark text-decoration-none">
         <span class="fs-4">Handover pages</span>
@@ -12,13 +12,13 @@
         <ul class="nav nav-pills flex-column mb-auto">
             <li class="nav-item">
             <ul class="nav flex-column" v-for="page in filteredPages" :key="page.id">
-                <li class="nav-item"><a href="#" class="nav-link link-dark">{{ page.name }}</a></li>
+                <li class="nav-item"><a href="#" class="nav-link link-dark" :class="{'active-page': page.id === selectedPage}" @click.prevent="selectPage(page.id)">{{ page.name }}</a></li>
             </ul>
             </li>
         </ul>
     </div>
     </div>
-    </aside>
+  </div>
   </template>
   
   <script>
@@ -61,6 +61,12 @@
         ]
       };
     },
+    methods: {
+      selectPage(id) {
+        this.selectedPage = id;
+        this.$router.push({ name: 'page', params: { id } });
+      }
+    },
     computed: {
       filteredPages() {
         return this.pages.filter(page => page.name.toLowerCase().includes(this.searchQuery.toLowerCase()));
@@ -70,7 +76,7 @@
   </script>
   
 <style lang="scss" scoped>
-aside {
+.sidebar-comp {
   position: fixed;
   left: 0;
   height: 100vh;
@@ -81,6 +87,14 @@ aside {
 .nav-pills-wrapper {
   overflow-y: auto; /* Enables vertical scrolling */
   max-height: calc(100vh - 100px); /* Adjust height as needed */
+}
+.nav-link {
+  transition: background-color 0.3s, color 0.3s;
+}
+
+.nav-link:hover, .nav-link.active-page {
+  background-color: var(--primary-color);
+  color: white !important;
 }
 </style>
   
