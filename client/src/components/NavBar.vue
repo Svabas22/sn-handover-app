@@ -62,7 +62,7 @@ export default {
   methods: {
   async fetchUserClaims() {
     try {
-      const response = await axios.get('/api/userclaims');
+      const response = await axios.get('/users/userclaims');
       console.log(response.data);
       this.userClaims = response.data;
       this.userProfile.displayName = response.data.name;
