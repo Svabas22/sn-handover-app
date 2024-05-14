@@ -1,24 +1,12 @@
 <template>
-  <div id="app-container">
-    <NavbarComponent />
-    <div class="main-container">
-      <aside class="sidebar">
-        <SidebarComponent />
-      </aside>
-      <RouterView />
-    </div>
-  </div>
+  <RouterView />
 </template>
 
 <script>
-  import NavbarComponent from './components/NavBar.vue';
-  import SidebarComponent from './components/sideBar.vue';
-  export default {
-    components: {
-      NavbarComponent,
-      SidebarComponent
-    }
-  }
+export default {
+  name: 'App'
+};
+  
 </script>
 
 

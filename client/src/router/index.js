@@ -1,12 +1,26 @@
 import { createRouter, createWebHistory } from 'vue-router';
+import Login from '@/components/loginComp.vue';
+import Home from '@/components/homeComp.vue';
 //import formTest from '@/components/formTest';
-import TestingCards from '@/components/testingCards';
+
 
 const router = createRouter({
   history: createWebHistory(),
   routes: [
-    { path: '/', name: 'TestingCards', component: TestingCards }
+    { path: '/', redirect: '/login' },
+    { path: '/login', name: 'Login', component: Login },
+    { path: '/home', name: 'Home', component: Home, meta: { requiresAuth: true }  }
   ]
 });
+
+router.beforeEach((to, from, next) => {
+  const isAuthenticated = !!localStorage.getItem('token'); // Adjust as needed
+  if (to.matched.some(record => record.meta.requiresAuth) && !isAuthenticated) {
+    next('/login');
+  } else {
+    next();
+  }
+});
+
 
 export default router;
