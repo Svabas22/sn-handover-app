@@ -29,6 +29,7 @@ router.get('/redirect', (req, res) => {
 
     cca.acquireTokenByCode(tokenRequest).then((response) => {
         req.session.accessToken = response.accessToken;
+        
         res.redirect('/home');
     }).catch((error) => console.log(JSON.stringify(error)));
 });
