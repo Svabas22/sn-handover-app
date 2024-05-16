@@ -1,12 +1,31 @@
 import { createRouter, createWebHistory } from 'vue-router';
-//import formTest from '@/components/formTest';
+import Login from '../components/loginComp.vue';
+// import formTest from '@/components/formTest';
 import TestingCards from '@/components/testingCards';
 
 const router = createRouter({
-  history: createWebHistory(),
+  history: createWebHistory(process.env.BASE_URL),
   routes: [
-    { path: '/', name: 'TestingCards', component: TestingCards }
+    { path: '/login', name: 'Login', component: Login },
+    { path: '/', name: 'TestingCards', component: TestingCards, meta: { requiresAuth: true } }
   ]
 });
 
+
+
+router.beforeEach((to, from, next) => {
+  
+  const isAuthenticated = localStorage.getItem('userAuthenticated') === 'true';
+
+  if (to.matched.some(record => record.meta.requiresAuth) && !isAuthenticated) {
+      next('/login');
+  } else if (to.path === '/login' && isAuthenticated) {
+      next('/');  // Redirect to the root or dashboard if already authenticated
+  } else {
+      next();  // Proceed as normal
+  }
+});
+
 export default router;
+
+//vue router

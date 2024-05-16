@@ -9,7 +9,7 @@ const router = express.Router();
 router.get('/signin', authProvider.login({
     scopes: [],
     redirectUri: REDIRECT_URI,
-    successRedirect: '/auth/acquireToken'
+    successRedirect: '/'
 }));
 
 router.get('/acquireToken', authProvider.acquireToken({
@@ -24,5 +24,13 @@ router.get('/signout', authProvider.logout({
     postLogoutRedirectUri: POST_LOGOUT_REDIRECT_URI
 }));
 
-
+router.get('/status', (req, res) => {
+    if (req.session.isAuthenticated) {
+        res.json({ authenticated: true, user: req.session.user });
+    } else {
+        res.json({ authenticated: false });
+    }
+});
 module.exports = router;
+
+//authentication backend

@@ -1,8 +1,9 @@
 <template>
   <div id="app-container">
-    <NavbarComponent />
+    <NavbarComponent v-if="isAuthenticated" />
+
     <div class="main-container">
-      <aside class="sidebar">
+      <aside class="sidebar" v-if="isAuthenticated">
         <SidebarComponent />
       </aside>
       <RouterView />
@@ -13,12 +14,34 @@
 <script>
   import NavbarComponent from './components/NavBar.vue';
   import SidebarComponent from './components/sideBar.vue';
+
+ 
   export default {
+    name: 'App',
     components: {
       NavbarComponent,
       SidebarComponent
+    },
+    data() {
+      return {
+        isAuthenticated: false
+      }
+    },
+    created() {
+      this.checkAuthentication();
+    },
+    methods: {
+    checkAuthentication() {
+      // Check authentication status (simplified for example purposes)
+      this.isAuthenticated = localStorage.getItem('userAuthenticated') ? true : false;
+
+      // Redirect if not authenticated
+      if (!this.isAuthenticated) {
+        this.$router.push('/login');
+      }
     }
   }
+}
 </script>
 
 
@@ -41,7 +64,5 @@ button {
   appearance: none;
 }
 
-/* .app-container {
-  display: flex;
-} */
+/* APP.VUE */
 </style>

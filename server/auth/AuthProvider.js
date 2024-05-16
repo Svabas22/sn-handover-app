@@ -17,11 +17,6 @@ class AuthProvider {
     login(options = {}) {
         return async (req, res, next) => {
 
-            /**
-             * MSAL Node library allows you to pass your custom state as state parameter in the Request object.
-             * The state parameter can also be used to encode information of the app's state before redirect.
-             * You can pass the user's state in the app, such as the page or view they were on, as input to this parameter.
-             */
             const state = this.cryptoProvider.base64Encode(
                 JSON.stringify({
                     successRedirect: options.successRedirect || '/',
@@ -30,32 +25,16 @@ class AuthProvider {
 
             const authCodeUrlRequestParams = {
                 state: state,
-
-                /**
-                 * By default, MSAL Node will add OIDC scopes to the auth code url request. For more information, visit:
-                 * https://docs.microsoft.com/azure/active-directory/develop/v2-permissions-and-consent#openid-connect-scopes
-                 */
                 scopes: options.scopes || [],
                 redirectUri: options.redirectUri,
             };
 
             const authCodeRequestParams = {
                 state: state,
-
-                /**
-                 * By default, MSAL Node will add OIDC scopes to the auth code request. For more information, visit:
-                 * https://docs.microsoft.com/azure/active-directory/develop/v2-permissions-and-consent#openid-connect-scopes
-                 */
                 scopes: options.scopes || [],
                 redirectUri: options.redirectUri,
             };
 
-            /**
-             * If the current msal configuration does not have cloudDiscoveryMetadata or authorityMetadata, we will 
-             * make a request to the relevant endpoints to retrieve the metadata. This allows MSAL to avoid making 
-             * metadata discovery calls, thereby improving performance of token acquisition process. For more, see:
-             * https://github.com/AzureAD/microsoft-authentication-library-for-js/blob/dev/lib/msal-node/docs/performance.md
-             */
             if (!this.msalConfig.auth.cloudDiscoveryMetadata || !this.msalConfig.auth.authorityMetadata) {
 
                 const [cloudDiscoveryMetadata, authorityMetadata] = await Promise.all([
@@ -69,7 +48,6 @@ class AuthProvider {
 
             const msalInstance = this.getMsalInstance(this.msalConfig);
 
-            // trigger the first leg of auth code flow
             return this.redirectToAuthCodeUrl(
                 authCodeUrlRequestParams,
                 authCodeRequestParams,
