@@ -1,8 +1,8 @@
 var express = require('express');
-
-const authProvider = require('../auth/AuthProvider');
-const { REDIRECT_URI, POST_LOGOUT_REDIRECT_URI } = require('../authConfig');
-
+const msal = require('@azure/msal-node');
+// const authProvider = require('../auth/AuthProvider');
+const { msalConfig, REDIRECT_URI, POST_LOGOUT_REDIRECT_URI } = require('../authConfig');
+const isAuthenticated = require('../auth/isAuthenticated');
 
 const router = express.Router();
 
@@ -12,11 +12,19 @@ router.get('/signin', authProvider.login({
     successRedirect: '/'
 }));
 
-router.get('/acquireToken', authProvider.acquireToken({
-    scopes: ['User.Read'],
-    redirectUri: REDIRECT_URI,
-    successRedirect: '/'
-}));
+router.get('/redirect', (req, res) => {
+    const tokenRequest = {
+        code: req.query.code,
+        scopes: ["user.read"],
+        redirectUri: process.env.REDIRECT_URI
+    };
+
+    cca.acquireTokenByCode(tokenRequest).then((response) => {
+        req.session.accessToken = response.accessToken;
+        
+        res.redirect('/home');
+    }).catch((error) => console.log(JSON.stringify(error)));
+});
 
 router.post('/redirect', authProvider.handleRedirect());
 

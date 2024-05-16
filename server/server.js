@@ -33,7 +33,7 @@ app.use(express.urlencoded({ extended: false }));
 app.use(session({
   secret: process.env.EXPRESS_SESSION_SECRET,
   resave: false,
-  saveUninitialized: false,
+  saveUninitialized: true,
   cookie: {
       httpOnly: true,
       secure: true, // set this to true on production
@@ -75,6 +75,10 @@ io.on('connection', (socket) => {
   socket.on('disconnect', () => {
       console.log('User disconnected');
   });
+});
+
+app.get('*', (req, res) => {
+  res.sendFile(path.join(__dirname, 'client', 'dist', 'index.html'));
 });
 
 app.get('/api/records', async (req, res) => {
