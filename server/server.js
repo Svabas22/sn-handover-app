@@ -14,7 +14,7 @@ const redis = require('redis');
 var indexRouter = require('./routes/index');
 var usersRouter = require('./routes/users');
 var authRouter = require('./routes/auth');
-
+const RedisStore = require('connect-redis').default;
 const { CosmosClient } = require("@azure/cosmos");
 const endpoint = process.env.COSMOS_DB_ENDPOINT;
 const key = process.env.COSMOS_DB_KEY;
@@ -47,6 +47,7 @@ redisClient.on('error', (err) => {
 });
 
 app.use(session({
+  store: new RedisStore({ client: redisClient }),
   secret: process.env.EXPRESS_SESSION_SECRET,
   resave: false,
   saveUninitialized: true,
@@ -92,6 +93,8 @@ io.on('connection', (socket) => {
       console.log('User disconnected');
   });
 });
+
+app.set('trust proxy', 1); 
 
 app.get('*', (req, res) => {
   res.sendFile(path.join(__dirname, 'client', 'dist', 'index.html'));

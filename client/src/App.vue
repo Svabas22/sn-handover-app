@@ -1,27 +1,11 @@
 <template>
-  <div id="app-container">
-    <NavbarComponent v-if="isAuthenticated" />
-
-    <div class="main-container">
-      <aside class="sidebar" v-if="isAuthenticated">
-        <SidebarComponent />
-      </aside>
-      <RouterView />
-    </div>
-  </div>
+  <router-view/>
 </template>
 
 <script>
-  import NavbarComponent from './components/NavBar.vue';
-  import SidebarComponent from './components/sideBar.vue';
 
- 
   export default {
     name: 'App',
-    components: {
-      NavbarComponent,
-      SidebarComponent
-    },
     data() {
       return {
         isAuthenticated: false
