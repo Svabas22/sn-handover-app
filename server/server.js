@@ -10,7 +10,7 @@ const socketIo = require('socket.io');
 var cookieParser = require('cookie-parser');
 
 const morgan = require('morgan');
-
+const redis = require('redis');
 var indexRouter = require('./routes/index');
 var usersRouter = require('./routes/users');
 var authRouter = require('./routes/auth');
@@ -30,6 +30,21 @@ app.use(cookieParser());
 app.use(express.urlencoded({ extended: false }));
 
 console.log(process.env.ENVR === 'production');
+
+const redisClient = redis.createClient({
+  url: process.env.REDIS_KEY,
+  tls: {
+    rejectUnauthorized: process.env.ENVR === 'production'
+  }
+});
+
+redisClient.on('connect', () => {
+  console.log('Redis connected');
+});
+
+redisClient.on('error', (err) => {
+  console.log('Redis error: ', err);
+});
 
 app.use(session({
   secret: process.env.EXPRESS_SESSION_SECRET,

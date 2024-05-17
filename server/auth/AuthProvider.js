@@ -126,7 +126,7 @@ class AuthProvider {
                 if (req.session.tokenCache) {
                     msalInstance.getTokenCache().deserialize(req.session.tokenCache);
                 }
-                console.log('Session data before using PKCE Codes:', req.session);
+                console.log('Session data before using PKCE Codes:', req.session.pkceCodes.verifier);
 
                 const tokenResponse = await msalInstance.acquireTokenByCode(authCodeRequest, req.body);
 
