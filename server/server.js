@@ -33,11 +33,12 @@ console.log(process.env.ENVR === 'production');
 
 const redisClient = redis.createClient({
   url: process.env.REDIS_KEY,
+  //legacyMode: true,
   tls: {
     rejectUnauthorized: process.env.ENVR === 'production'
   }
 });
-
+redisClient.connect().catch(console.error);
 redisClient.on('connect', () => {
   console.log('Redis connected');
 });
@@ -45,6 +46,9 @@ redisClient.on('connect', () => {
 redisClient.on('error', (err) => {
   console.log('Redis error: ', err);
 });
+
+
+
 
 app.use(session({
   store: new RedisStore({ client: redisClient }),
