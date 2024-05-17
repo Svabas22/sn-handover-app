@@ -1,6 +1,6 @@
 import { createRouter, createWebHistory } from 'vue-router';
 import Login from '../components/loginComp.vue';
-// import formTest from '@/components/formTest';
+//import formTest from '@/components/formTest';
 import TestingCards from '@/components/testingCards';
 
 const router = createRouter({

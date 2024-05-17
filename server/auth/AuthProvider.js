@@ -17,6 +17,15 @@ class AuthProvider {
     login(options = {}) {
         return async (req, res, next) => {
 
+            const { verifier, challenge } = await this.cryptoProvider.generatePkceCodes();
+
+            // Store in session
+            req.session.pkceCodes = {
+                verifier,
+                challenge,
+                challengeMethod: 'S256'
+            };
+
             const state = this.cryptoProvider.base64Encode(
                 JSON.stringify({
                     successRedirect: options.successRedirect || '/',
@@ -34,6 +43,8 @@ class AuthProvider {
                 scopes: options.scopes || [],
                 redirectUri: options.redirectUri,
             };
+
+            console.log('PKCE Codes set in session:', req.session.pkceCodes);
 
             if (!this.msalConfig.auth.cloudDiscoveryMetadata || !this.msalConfig.auth.authorityMetadata) {
 
@@ -102,6 +113,7 @@ class AuthProvider {
                 return next(new Error('Error: response not found'));
             }
 
+
             const authCodeRequest = {
                 ...req.session.authCodeRequest,
                 code: req.body.code,
@@ -114,6 +126,7 @@ class AuthProvider {
                 if (req.session.tokenCache) {
                     msalInstance.getTokenCache().deserialize(req.session.tokenCache);
                 }
+                console.log('Session data before using PKCE Codes:', req.session);
 
                 const tokenResponse = await msalInstance.acquireTokenByCode(authCodeRequest, req.body);
 
@@ -138,11 +151,6 @@ class AuthProvider {
     logout(options = {}) {
         return (req, res, next) => {
 
-            /**
-             * Construct a logout URI and redirect the user to end the
-             * session with Azure AD. For more information, visit:
-             * https://docs.microsoft.com/azure/active-directory/develop/v2-protocols-oidc#send-a-sign-out-request
-             */
             let logoutUri = `${this.msalConfig.auth.authority}/oauth2/v2.0/`;
 
             if (options.postLogoutRedirectUri) {
@@ -184,13 +192,6 @@ class AuthProvider {
                 verifier: verifier,
                 challenge: challenge,
             };
-
-            /**
-             * By manipulating the request objects below before each request, we can obtain
-             * auth artifacts with desired claims. For more information, visit:
-             * https://azuread.github.io/microsoft-authentication-library-for-js/ref/modules/_azure_msal_node.html#authorizationurlrequest
-             * https://azuread.github.io/microsoft-authentication-library-for-js/ref/modules/_azure_msal_node.html#authorizationcoderequest
-             **/
             req.session.authCodeUrlRequest = {
                 ...authCodeUrlRequestParams,
                 responseMode: msal.ResponseMode.FORM_POST, // recommended for confidential clients

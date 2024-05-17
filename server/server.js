@@ -29,6 +29,7 @@ app.use(express.json());
 app.use(cookieParser());
 app.use(express.urlencoded({ extended: false }));
 
+console.log(process.env.ENVR === 'production');
 
 app.use(session({
   secret: process.env.EXPRESS_SESSION_SECRET,
@@ -36,7 +37,7 @@ app.use(session({
   saveUninitialized: true,
   cookie: {
       httpOnly: true,
-      secure: true, // set this to true on production
+      secure: process.env.ENVR === 'production', // set this to true on production
   }
 }));
 
