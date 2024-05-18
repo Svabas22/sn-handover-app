@@ -81,6 +81,8 @@ app.post('/api/records', async (req, res) => {
   }
 });
 
+
+
 //Socket IO
 io.on('connection', (socket) => {
   console.log('A user connected');
@@ -100,9 +102,9 @@ io.on('connection', (socket) => {
 
 app.set('trust proxy', 1); 
 
-app.get('*', (req, res) => {
-  res.sendFile(path.join(__dirname, 'client', 'dist', 'index.html'));
-});
+// app.get('*', (req, res) => {
+//   res.sendFile(path.join(__dirname, '../client', 'dist', 'index.html'));
+// });
 
 app.get('/api/records', async (req, res) => {
   try {

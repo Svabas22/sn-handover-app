@@ -16,7 +16,6 @@
 import NavBarComponent from './NavBar.vue';
 import SideBarComponent from './sideBar.vue';
 import TestingCards from './testingCards.vue';
-
 export default {
   components: {
     NavBarComponent,

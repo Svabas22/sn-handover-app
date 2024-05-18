@@ -134,11 +134,11 @@ class AuthProvider {
                 req.session.idToken = tokenResponse.idToken;
                 req.session.account = tokenResponse.account;
                 req.session.isAuthenticated = true;
-                // req.session.user = {
-                //     username: tokenResponse.account.username,
-                //     name: tokenResponse.account.name,
-                //     email: tokenResponse.account.username
-                // };
+                req.session.user = {
+                    username: tokenResponse.account.username,
+                    name: tokenResponse.account.name,
+                    email: tokenResponse.account.username
+                };
 
                 const state = JSON.parse(this.cryptoProvider.base64Decode(req.body.state));
                 res.redirect(state.successRedirect);

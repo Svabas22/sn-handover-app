@@ -51,50 +51,16 @@
 </template>
   
   <script>
-// import axios from 'axios';
-// export default {
-//   name: 'NavbarComponent',
-//   data() {
-//     return {
-//       userProfile: { displayName: '' },
-//     };
-//   },
-//   methods: {
-//   async fetchUserClaims() {
-//     try {
-//       const response = await axios.get('/users/userclaims');
-//       console.log(response.data);
-//       this.userClaims = response.data;
-//       this.userProfile.displayName = response.data.name;
+const username = localStorage.getItem('user');
+export default {
+  name: 'NavbarComponent',
+  data() {
+    return {
+      userProfile: { displayName: username },
+    };
+  },
+};
 
-//     } catch (error) {
-//       console.error("Error fetching user claims", error);
-//     }
-//   }
-//   },
-//   mounted() {
-//     this.fetchUserClaims();
-//   }
-// };
-
-  import { fetchUser } from '../services/fetch';
-
-  export default {
-    data() {
-      return {
-        user: null,
-      };
-    },
-    async created() {
-      try {
-        const user = await fetchUser();
-        this.user = user;
-        console.log(user);
-      } catch (error) {
-        console.error(error);
-      }
-    },
-  };
   </script>
   
   <style scoped>
