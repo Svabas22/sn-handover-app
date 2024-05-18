@@ -51,12 +51,12 @@
 </template>
   
   <script>
-const username = localStorage.getItem('user');
+//const username = localStorage.getItem('user');
 export default {
   name: 'NavbarComponent',
   data() {
     return {
-      userProfile: { displayName: username },
+      userProfile: { displayName: localStorage.getItem('user') },
     };
   },
 };
