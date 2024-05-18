@@ -1,31 +1,34 @@
 <template>
   <div id="home-container">
-    <NavBarComponent />
+      <NavBarComponent/>
     <div class="main-container">
       <aside class="sidebar">
         <SideBarComponent />
       </aside>
       <div class="content">
-        <TestingCards />
+        <contentComp />
       </div>
     </div>
   </div>
 </template>
 
 <script>
+import 'bootstrap/dist/js/bootstrap.bundle.js';
 import NavBarComponent from './NavBar.vue';
 import SideBarComponent from './sideBar.vue';
-import TestingCards from './testingCards.vue';
+import contentComp from './contentComp.vue';
 export default {
   components: {
     NavBarComponent,
     SideBarComponent,
-    TestingCards
+    contentComp
   }
 };
 </script>
 
 <style>
+
+
 #home-container {
   display: flex;
   flex-direction: column;
@@ -34,11 +37,17 @@ export default {
 
 .main-container {
   display: flex;
+  flex-direction: row !important;
   flex-grow: 1;
+  min-height: 0;
+}
+.content {
+  flex-grow: 1;
+  padding: 20px; /* Adjust as needed */
 }
 
 .sidebar {
-  width: 250px; /* Adjust as needed */
+  width: 280px; /* Adjust as needed */
   background-color: #f8f9fa; /* Adjust as needed */
 }
 

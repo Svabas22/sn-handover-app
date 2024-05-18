@@ -1,10 +1,6 @@
 <template>
     <div class="sidebar-comp">
     <div class="d-flex flex-column flex-shrink-0 p-3 bg-light" style="width: 280px;">
-      <a href="/" class="d-flex align-items-center mb-3 mb-md-0 me-md-auto link-dark text-decoration-none">
-        <span class="fs-4">Handover pages</span>
-      </a>
-      <hr>
       <div class="pb-3 mb-3 border-bottom">
         <input v-model="searchQuery" type="text" class="form-control" placeholder="Enter page title">
     </div>
