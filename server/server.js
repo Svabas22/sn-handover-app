@@ -1,5 +1,5 @@
 require('dotenv').config();
-//process.env["NODE_TLS_REJECT_UNAUTHORIZED"] = 0;
+process.env["NODE_TLS_REJECT_UNAUTHORIZED"] = 0;
 const express = require('express');
 const cors = require('cors');
 const path = require('path');
@@ -102,9 +102,9 @@ io.on('connection', (socket) => {
 
 app.set('trust proxy', 1); 
 
-app.get('*', (req, res) => {
-  res.sendFile(path.join(__dirname, '../client', 'dist', 'index.html'));
-});
+// app.get('*', (req, res) => {
+//   res.sendFile(path.join(__dirname, '../client', 'dist', 'index.html'));
+// });
 
 app.get('/api/records', async (req, res) => {
   try {
