@@ -6,7 +6,8 @@
         <SideBarComponent />
       </aside>
       <div class="content">
-        <contentComp />
+        <shiftComp />
+        <testingCards />
       </div>
     </div>
   </div>
@@ -16,12 +17,14 @@
 import 'bootstrap/dist/js/bootstrap.bundle.js';
 import NavBarComponent from './NavBar.vue';
 import SideBarComponent from './sideBar.vue';
-import contentComp from './contentComp.vue';
+import shiftComp from './shiftComp.vue';
+import testingCards from './testingCards.vue';
 export default {
   components: {
     NavBarComponent,
     SideBarComponent,
-    contentComp
+    shiftComp,
+    testingCards
   }
 };
 </script>
