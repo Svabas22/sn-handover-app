@@ -2,7 +2,7 @@
   <div class="content-data">
     <h1>Product List</h1>
     <div v-for="product in products" :key="product.id" class="product-item">
-      <h2>{{ product.name }} - {{ product.sku }}</h2>
+      <h2>{{ product.address }} - {{ product.sku }}</h2>
       <p>{{ product.description }}</p>
       <p>Category: {{ product.categoryName }}</p>
       <p>Price: ${{ product.price }}</p>

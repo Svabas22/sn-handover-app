@@ -1,5 +1,5 @@
 require('dotenv').config();
-process.env["NODE_TLS_REJECT_UNAUTHORIZED"] = 0;
+//process.env["NODE_TLS_REJECT_UNAUTHORIZED"] = 0;
 const express = require('express');
 const cors = require('cors');
 const path = require('path');
@@ -83,7 +83,6 @@ app.post('/api/records', async (req, res) => {
 
 
 
-//Socket IO
 io.on('connection', (socket) => {
   console.log('A user connected');
 
@@ -106,18 +105,48 @@ app.set('trust proxy', 1);
 //   res.sendFile(path.join(__dirname, '../client', 'dist', 'index.html'));
 // });
 
+// app.get('/api/records', async (req, res) => {
+//   try {
+//     const { database } = await client.databases.createIfNotExists({ id: databaseId });
+//     const { container } = await database.containers.createIfNotExists({ id: containerId });
+//     const { resources: items } = await container.items
+//       .query("SELECT * from c")
+//       .fetchAll();
+//     res.status(200).json(items);
+//   } catch (error) {
+//     res.status(500).json({ error: error.message });
+//   }
+// });
+
 app.get('/api/records', async (req, res) => {
   try {
     const { database } = await client.databases.createIfNotExists({ id: databaseId });
     const { container } = await database.containers.createIfNotExists({ id: containerId });
-    const { resources: items } = await container.items
-      .query("SELECT * from c")
-      .fetchAll();
+    const { resources: items } = await container.items.query("SELECT c.id, c.title FROM c").fetchAll();
     res.status(200).json(items);
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
 });
+
+app.get('/api/records/:id', async (req, res) => {
+  const pageId = req.params.id;
+  try {
+    const { database } = await client.databases.createIfNotExists({ id: databaseId });
+    const { container } = await database.containers.createIfNotExists({ id: containerId });
+    const querySpec = {
+      query: "SELECT * FROM c WHERE c.id = @pageId",
+      parameters: [
+        { name: "@pageId", value: pageId }
+      ]
+    };
+    const { resources: items } = await container.items.query(querySpec).fetchAll();
+    res.status(200).json(items[0]);  // assuming the ID is unique and returns a single item
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
 
 
 const PORT = process.env.PORT || 3000;

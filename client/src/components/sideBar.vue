@@ -8,7 +8,7 @@
         <ul class="nav nav-pills flex-column mb-auto">
             <li class="nav-item">
             <ul class="nav flex-column" v-for="page in filteredPages" :key="page.id">
-                <li class="nav-item"><a href="#" class="nav-link link-dark" :class="{'active-page': page.id === selectedPage}" @click.prevent="selectPage(page.id)">{{ page.name }}</a></li>
+                <li class="nav-item"><a href="#" class="nav-link link-dark" @click="loadPage(page.id)">{{ page.title }}</a></li>
             </ul>
             </li>
         </ul>
@@ -18,56 +18,32 @@
   </template>
   
   <script>
+  import { mapActions, mapState } from 'vuex';
   export default {
     name: 'SidebarComponent',
     data() {
       return {
         searchQuery: '',
-        pages: [
-          { id: 1, name: 'Page 1' },
-          { id: 2, name: 'Page 2' },
-          { id: 3, name: 'Page 3' },
-          { id: 4, name: 'Page 4' },
-          { id: 5, name: 'Page 5' },
-          { id: 6, name: 'Page 6' },
-          { id: 7, name: 'Page 7' },
-          { id: 8, name: 'Page 8' },
-          { id: 9, name: 'Page 9' },
-          { id: 10, name: 'Page 10'},
-          { id: 11, name: 'Page 11'},
-          { id: 12, name: 'Page 12'},
-          { id: 13, name: 'Page 13'},
-          { id: 14, name: 'Page 14'},
-          { id: 15, name: 'Page 15'},
-          { id: 16, name: 'Page 16'},
-          { id: 17, name: 'Page 17'},
-          { id: 18, name: 'Page 18'},
-          { id: 19, name: 'Page 19'},
-          { id: 20, name: 'Page 20'},
-          { id: 21, name: 'Page 21'},
-          { id: 22, name: 'Page 22'},
-          { id: 23, name: 'Page 23'},
-          { id: 24, name: 'Page 24'},
-          { id: 25, name: 'Page 25'},
-          { id: 26, name: 'Page 26'},
-          { id: 27, name: 'Page 27'},
-          { id: 28, name: 'Page 28'},
-          { id: 29, name: 'Page 29'},
-          { id: 30, name: 'Page 30'}
-        ]
+        //pages: [],
+        //selectedPage: null
       };
     },
-    methods: {
-      selectPage(id) {
-        this.selectedPage = id;
-        this.$router.push({ name: 'page', params: { id } });
+    computed: {
+      ...mapState(['pages']),
+      filteredPages() {
+        return this.pages.filter(page => page.title.toLowerCase().includes(this.searchQuery.toLowerCase()));
       }
     },
-    computed: {
-      filteredPages() {
-        return this.pages.filter(page => page.name.toLowerCase().includes(this.searchQuery.toLowerCase()));
-      }
+    methods: {
+      ...mapActions(['fetchPages', 'fetchPageDetails']),
+      loadPage(pageId) {
+        this.fetchPageDetails(pageId);
+      },
+    },
+    created() {
+      this.fetchPages();
     }
+    
   }
   </script>
   

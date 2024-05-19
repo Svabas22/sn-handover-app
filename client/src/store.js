@@ -1,46 +1,29 @@
-import { createStore } from "vuex";
+// store.js
+import { createStore } from 'vuex';
 
 export default createStore({
-    state() {
-        return {
-            engineerData: {},
-            client1Data: {},
-            client2Data: {},
-            activeClient: 'client1',
-        };
+  state: {
+    pages: [],
+    currentPage: null
+  },
+  mutations: {
+    setPages(state, pages) {
+      state.pages = pages;
     },
-    mutations: {
-        setEngineerData(state, payload) {
-            state.engineerData = payload;
-        },
-        setClientData(state, { client, data }) {
-            state[`${client}Data`] = data;
-        },
-        setActiveClient(state, client) {
-            state.activeClient = client;
-        }
+    setCurrentPage(state, page) {
+      state.currentPage = page;
+    }
+  },
+  actions: {
+    async fetchPages({ commit }) {
+      const response = await fetch('/api/records');
+      const data = await response.json();
+      commit('setPages', data);
     },
-    actions: {
-        async fetchEngineerData({ commit }) {
-        //   const response = await fetch('/api/engineers');
-        //   const data = await response.json();
-        //   commit('setEngineerData', data);
-        const data = [
-            { id: 1, name: 'Alice' },
-            { id: 2, name: 'Bob' },
-            { id: 3, name: 'Charlie' },
-        ]
-        commit('setEngineerData', data);
-        },
-        async fetchClientData({ commit }, client) {
-          const response = await fetch(`/api/${client}`);
-          const data = await response.json();
-          commit('setClientData', { client, data });
-        },
-    },
-    getters: {
-        activeClientData(state) {
-          return state[`${state.activeClient}Data`];
-        }
-      }
+    async fetchPageDetails({ commit }, pageId) {
+      const response = await fetch(`/api/records/${pageId}`);
+      const data = await response.json();
+      commit('setCurrentPage', data);
+    }
+  }
 });
