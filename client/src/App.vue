@@ -10,21 +10,21 @@
       return {
         isAuthenticated: false
       }
-    },
-    created() {
-      this.checkAuthentication();
-    },
-    methods: {
-    checkAuthentication() {
-      // Check authentication status (simplified for example purposes)
-      this.isAuthenticated = localStorage.getItem('userAuthenticated') ? true : false;
-
-      // Redirect if not authenticated
-      if (!this.isAuthenticated) {
-        this.$router.push('/login');
-      }
     }
-  }
+  //   created() {
+  //     this.checkAuthentication();
+  //   },
+  //   methods: {
+  //   checkAuthentication() {
+  //     // Check authentication status (simplified for example purposes)
+  //     this.isAuthenticated = localStorage.getItem('userAuthenticated') ? true : false;
+
+  //     // Redirect if not authenticated
+  //     if (!this.isAuthenticated) {
+  //       this.$router.push('/login');
+  //     }
+  //   }
+  // }
 }
 </script>
 

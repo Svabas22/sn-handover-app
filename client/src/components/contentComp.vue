@@ -2,7 +2,7 @@
 <template>
   <div id="content-container" class="container mt-4">
     <div v-if="currentPage" class="main-container">
-      <h5 class="mb-3">{{ currentPage.title }}</h5>
+      <h1 class="mb-3">{{ currentPage.title }}</h1>
       <!-- Display engineers on shift -->
       <div>
         <h6>Engineers on Shift</h6>

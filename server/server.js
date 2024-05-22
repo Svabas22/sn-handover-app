@@ -1,5 +1,5 @@
 require('dotenv').config();
-//process.env["NODE_TLS_REJECT_UNAUTHORIZED"] = 0;
+process.env["NODE_TLS_REJECT_UNAUTHORIZED"] = 0;
 const express = require('express');
 const cors = require('cors');
 const path = require('path');
@@ -122,7 +122,10 @@ app.get('/api/records', async (req, res) => {
   try {
     const { database } = await client.databases.createIfNotExists({ id: databaseId });
     const { container } = await database.containers.createIfNotExists({ id: containerId });
-    const { resources: items } = await container.items.query("SELECT c.id, c.title FROM c").fetchAll();
+    const querySpec = {
+      query: "SELECT c.id, c.title FROM c ORDER BY c.date DESC"  // Sorting by date descending
+    };
+    const { resources: items } = await container.items.query(querySpec).fetchAll();
     res.status(200).json(items);
   } catch (error) {
     res.status(500).json({ error: error.message });

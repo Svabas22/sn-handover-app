@@ -7,8 +7,10 @@
       <div class="nav-pills-wrapper">
         <ul class="nav nav-pills flex-column mb-auto">
             <li class="nav-item">
-            <ul class="nav flex-column" v-for="page in filteredPages" :key="page.id">
-                <li class="nav-item"><a href="#" class="nav-link link-dark" @click="loadPage(page.id)">{{ page.title }}</a></li>
+            <ul class="nav flex-column" >
+                <li class="nav-item" v-for="page in filteredPages" :key="page.id">
+                  <a href="#" class="nav-link link-dark" :class="{active: page.id === currentPage?.id }" @click="loadPage(page.id)">{{ page.title }}</a>
+                </li>
             </ul>
             </li>
         </ul>
@@ -29,7 +31,7 @@
       };
     },
     computed: {
-      ...mapState(['pages']),
+      ...mapState(['pages', 'currentPage']),
       filteredPages() {
         return this.pages.filter(page => page.title.toLowerCase().includes(this.searchQuery.toLowerCase()));
       }
@@ -64,9 +66,13 @@
   transition: background-color 0.3s, color 0.3s;
 }
 
-.nav-link:hover, .nav-link.active-page {
+.nav-link:hover{
   background-color: var(--primary-color);
   color: white !important;
+}
+.nav-item.active {
+  background-color: var(--primary-color);
+  text-decoration-color: white !important;
 }
 </style>
   
