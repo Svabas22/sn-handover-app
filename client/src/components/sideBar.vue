@@ -72,7 +72,7 @@
 }
 .nav-item.active {
   background-color: var(--primary-color);
-  text-decoration-color: white !important;
+  color: white !important;
 }
 </style>
   

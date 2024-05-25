@@ -1,34 +1,17 @@
-<!-- contentComp.vue -->
 <template>
   <div id="content-container" class="container mt-4">
     <div v-if="currentPage" class="main-container">
       <div class="header">
-        <h1>Handover 2024-05-24 Night</h1>
+        <h1>{{ currentPage.title }}</h1>
         <div class="dropdown">
           <button class="btn btn-link text-decoration-none" id="dropdownMenuButton" data-bs-toggle="dropdown" aria-expanded="false">
             <i class="bi bi-three-dots-vertical"></i>
           </button>
           <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="dropdownMenuButton">
-            <li><a class="dropdown-item" href="#">Edit</a></li>
-            <li><a class="dropdown-item" href="#" @click="showModal">Remove page</a></li>
+            <li><a class="dropdown-item" @click="toggleEditMode">{{ editMode ? 'Save' : 'Edit' }}</a></li>
+            <li><hr class="dropdown-divider"></li>
+            <li><a class="dropdown-item" id="remove-btn" href="#">Remove page</a></li>
           </ul>
-        </div>
-      </div>
-      <div class="modal fade" id="deleteModal" tabindex="-1" aria-labelledby="deleteModalLabel" aria-hidden="true">
-        <div class="modal-dialog">
-          <div class="modal-content">
-            <div class="modal-header">
-              <h5 class="modal-title" id="deleteModalLabel">Confirm Deletion</h5>
-              <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <div class="modal-body">
-              Are you sure you want to delete this page?
-            </div>
-            <div class="modal-footer">
-              <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">No</button>
-              <button type="button" class="btn btn-danger" @click="confirmDelete">Yes</button>
-            </div>
-          </div>
         </div>
       </div>
       <!-- Display engineers on shift -->
@@ -43,13 +26,57 @@
       <!-- Display client data -->
       <div v-for="(client, clientName) in currentPage.clients" :key="clientName">
         <h6>{{ clientName }}</h6>
-        <div v-for="(items, section) in client" :key="section">
-          <h7>{{ section }}</h7>
-          <ul>
-            <li v-for="item in items" :key="item.id">
-              {{ item.title }} - {{ item.status }}
-            </li>
-          </ul>
+        <div v-if="client.incidents.length > 0">
+          <h7>Incidents</h7>
+          <table class="table table-bordered">
+            <thead>
+              <tr>
+                <th>Incident Number</th>
+                <th>Status</th>
+                <th>Priority</th>
+                <th>Main Problem</th>
+                <th>Notes</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr v-for="incident in client.incidents" :key="incident.incNumber">
+                <td>{{ incident.incNumber }}</td>
+                <td>
+                  <div v-if="!editMode">{{ incident.status }}</div>
+                  <div v-else>
+                    <select v-model="incident.status">
+                      <option value="Active">Active</option>
+                      <option value="Awaiting user info">Awaiting User Info</option>
+                      <option value="Awaiting third party">Awaiting Third Party</option>
+                      <option value="Resolved">Resolved</option>
+                    </select>
+                  </div>
+                </td>
+                <td>
+                  <div v-if="!editMode">{{ incident.priority }}</div>
+                  <div v-else>
+                    <select v-model="incident.priority">
+                      <option value="High">High</option>
+                      <option value="Medium">Medium</option>
+                      <option value="Low">Low</option>
+                    </select>
+                  </div>
+                </td>
+                <td>
+                  <div v-if="!editMode">{{ incident.mainProblem }}</div>
+                  <div v-else>
+                    <input type="text" v-model="incident.mainProblem" />
+                  </div>
+                </td>
+                <td>
+                  <div v-if="!editMode">{{ incident.notes }}</div>
+                  <div v-else>
+                    <input type="text" v-model="incident.notes" />
+                  </div>
+                </td>
+              </tr>
+            </tbody>
+          </table>
         </div>
       </div>
     </div>
@@ -58,27 +85,31 @@
 </template>
 
 <script>
-import { Modal } from 'bootstrap';
-import { mapState } from 'vuex';
+import { mapState, mapActions } from 'vuex';
 
 export default {
+  data() {
+    return {
+      editMode: false,
+    };
+  },
   computed: {
-    ...mapState(['currentPage'])
+    ...mapState(['currentPage']),
   },
   methods: {
-    showModal() {
-      var myModal = new Modal(document.getElementById('deleteModal'), {
-        keyboard: false
-      });
-      myModal.show();
+    ...mapActions(['fetchPageDetails', 'updatePageDetails']),
+    toggleEditMode() {
+      if (this.editMode) {
+        // Save the changes to the database
+        this.updatePageDetails(this.currentPage);
+      }
+      this.editMode = !this.editMode;
     },
-    confirmDelete() {
-      // Your deletion logic here
-      console.log('Page deleted');
-      var myModal = Modal.getInstance(document.getElementById('deleteModal'));
-      myModal.hide();
-    }
-  }
+  },
+  created() {
+    const docId = this.$route.params.id; // Assuming the document ID is passed as a route parameter
+    this.fetchPageDetails(docId);
+  },
 };
 </script>
 
@@ -111,5 +142,8 @@ export default {
 }
 .bi-three-dots-vertical {
   color: rgb(0, 0, 0);
+}
+#remove-btn {
+  color: red;
 }
 </style>

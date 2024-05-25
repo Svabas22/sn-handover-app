@@ -16,7 +16,7 @@ export default createStore({
   },
   actions: {
     async fetchPages({ commit, dispatch }) {
-      try{
+      try {
         const response = await fetch('/api/records');
         const data = await response.json();
         commit('setPages', data);
@@ -28,9 +28,28 @@ export default createStore({
       }
     },
     async fetchPageDetails({ commit }, pageId) {
-      const response = await fetch(`/api/records/${pageId}`);
-      const data = await response.json();
-      commit('setCurrentPage', data);
+      try {
+        const response = await fetch(`/api/records/${pageId}`);
+        const data = await response.json();
+        commit('setCurrentPage', data);
+      } catch (error) {
+        console.error('Error fetching page details:', error);
+      }
+    },
+    async updatePageDetails({ commit }, page) {
+      try {
+        const response = await fetch(`/api/records/${page.id}`, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify(page)
+        });
+        const data = await response.json();
+        commit('setCurrentPage', data);
+      } catch (error) {
+        console.error('Error updating page details:', error);
+      }
     }
   }
 });
