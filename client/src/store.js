@@ -18,6 +18,9 @@ export default createStore({
     async fetchPages({ commit, dispatch }) {
       try {
         const response = await fetch('/api/records');
+        if (!response.ok) {
+          throw new Error('Network response was not ok');
+        }
         const data = await response.json();
         commit('setPages', data);
         if (data.length > 0) {
@@ -30,6 +33,9 @@ export default createStore({
     async fetchPageDetails({ commit }, pageId) {
       try {
         const response = await fetch(`/api/records/${pageId}`);
+        if (!response.ok) {
+          throw new Error('Network response was not ok');
+        }
         const data = await response.json();
         commit('setCurrentPage', data);
       } catch (error) {
@@ -45,6 +51,9 @@ export default createStore({
           },
           body: JSON.stringify(page)
         });
+        if (!response.ok) {
+          throw new Error('Network response was not ok');
+        }
         const data = await response.json();
         commit('setCurrentPage', data);
       } catch (error) {

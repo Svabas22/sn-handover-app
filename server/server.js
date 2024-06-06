@@ -1,5 +1,8 @@
 require('dotenv').config();
-process.env["NODE_TLS_REJECT_UNAUTHORIZED"] = 0;
+if (process.env.ENVR === 'dev') {
+  process.env["NODE_TLS_REJECT_UNAUTHORIZED"] = 0;
+}
+
 const express = require('express');
 const cors = require('cors');
 const path = require('path');
@@ -29,7 +32,6 @@ app.use(express.json());
 app.use(cookieParser());
 app.use(express.urlencoded({ extended: false }));
 
-console.log(process.env.ENVR === 'production');
 
 const redisClient = redis.createClient({
   url: process.env.REDIS_KEY,
@@ -46,9 +48,6 @@ redisClient.on('connect', () => {
 redisClient.on('error', (err) => {
   console.log('Redis error: ', err);
 });
-
-
-
 
 app.use(session({
   store: new RedisStore({ client: redisClient }),
@@ -69,6 +68,19 @@ app.use('/auth', authRouter);
 //Cosmos DB config
 const client = new CosmosClient({ endpoint, key });
 app.use(morgan('combined'));
+
+
+async function initializeCosmosDB() {
+  try {
+    database = (await client.databases.createIfNotExists({ id: databaseId })).database;
+    container = (await database.containers.createIfNotExists({ id: containerId })).container;
+  } catch (error) {
+    console.error('Error initializing Cosmos DB:', error);
+  }
+}
+
+initializeCosmosDB();
+
 app.post('/api/records', async (req, res) => {
   const { name, comment } = req.body;
   try {
@@ -118,25 +130,41 @@ app.set('trust proxy', 1);
 //   }
 // });
 
+app.post('/api/records', async (req, res) => {
+  const { id, title, date, engineersOnShift, clients, pageId } = req.body; // Ensure pageId is included in the request body
+  try {
+    if (!container) {
+      throw new Error('Cosmos DB container is not initialized');
+    }
+    const newRecord = { id, title, date, engineersOnShift, clients, pageId };
+    const { resource: createdItem } = await container.items.create(newRecord);
+    res.status(201).json(createdItem);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
 app.get('/api/records', async (req, res) => {
   try {
-    const { database } = await client.databases.createIfNotExists({ id: databaseId });
-    const { container } = await database.containers.createIfNotExists({ id: containerId });
+    if (!container) {
+      throw new Error('Cosmos DB container is not initialized');
+    }
     const querySpec = {
-      query: "SELECT c.id, c.title FROM c ORDER BY c.date DESC"  // Sorting by date descending
+      query: "SELECT c.id, c.title FROM c ORDER BY c.date DESC"
     };
     const { resources: items } = await container.items.query(querySpec).fetchAll();
     res.status(200).json(items);
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    res.status500().json({ error: error.message });
   }
 });
 
 app.get('/api/records/:id', async (req, res) => {
   const pageId = req.params.id;
   try {
-    const { database } = await client.databases.createIfNotExists({ id: databaseId });
-    const { container } = await database.containers.createIfNotExists({ id: containerId });
+    if (!container) {
+      throw new Error('Cosmos DB container is not initialized');
+    }
     const querySpec = {
       query: "SELECT * FROM c WHERE c.id = @pageId",
       parameters: [
@@ -144,9 +172,43 @@ app.get('/api/records/:id', async (req, res) => {
       ]
     };
     const { resources: items } = await container.items.query(querySpec).fetchAll();
-    res.status(200).json(items[0]);  // assuming the ID is unique and returns a single item
+    res.status(200).json(items[0]);
   } catch (error) {
     res.status(500).json({ error: error.message });
+  }
+});
+
+app.put('/api/records/:id', async (req, res) => {
+  const pageId = req.params.id;
+  const updatedDocument = req.body;
+
+  try {
+    if (!container) {
+      throw new Error('Cosmos DB container is not initialized');
+    }
+    const partitionKey = updatedDocument.pageId; // Ensure the partition key is in the updated document
+    const { resource: doc } = await container.item(pageId, partitionKey).replace(updatedDocument);
+    res.status(200).json(doc);
+  } catch (error) {
+    console.error('Error updating record:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+app.delete('/api/records/:id', async (req, res) => {
+  const pageId = req.params.id;
+  const partitionKey = req.body.pageId; // Ensure the partition key is provided in the request body
+  try {
+    if (!container) {
+      throw new Error('Cosmos DB container is not initialized');
+    }
+    const { resource: result } = await container.item(pageId, partitionKey).delete();
+    if (result) {
+      res.status(204).send(); // No Content, deletion successful
+    }
+  } catch (error) {
+    console.error('Failed to delete record:', error);
+    res.status(500).json({ error: "An internal error occurred while deleting the record." });
   }
 });
 

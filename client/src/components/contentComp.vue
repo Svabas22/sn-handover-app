@@ -3,6 +3,18 @@
     <div v-if="currentPage" class="main-container">
       <div class="header">
         <h1>{{ currentPage.title }}</h1>
+        <div class="dropwdowns-opt">
+          <div class="dropdown-add">
+          <button class="btn btn-link text-decoration-none" id="dropdownMenuButton" data-bs-toggle="dropdown" aria-expanded="false">
+            <i class="bi bi-plus-lg"></i>
+          </button>
+          <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="dropdownMenuButton">
+            <li><a class="dropdown-item" id="add-inc-btn" href="#">Add Incident</a></li>
+            <li><a class="dropdown-item" id="add-prb-btn" href="#">Add Problem</a></li>
+            <li><a class="dropdown-item" id="add-chg-btn" href="#">Add Change</a></li>
+            <li><a class="dropdown-item" id="add-req-btn" href="#">Add Service Request</a></li>
+          </ul>
+        </div>
         <div class="dropdown">
           <button class="btn btn-link text-decoration-none" id="dropdownMenuButton" data-bs-toggle="dropdown" aria-expanded="false">
             <i class="bi bi-three-dots-vertical"></i>
@@ -10,8 +22,38 @@
           <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="dropdownMenuButton">
             <li><a class="dropdown-item" @click="toggleEditMode">{{ editMode ? 'Save' : 'Edit' }}</a></li>
             <li><hr class="dropdown-divider"></li>
-            <li><a class="dropdown-item" id="remove-btn" href="#">Remove page</a></li>
+            <li><a class="dropdown-item" id="remove-btn" href="#" data-bs-toggle="modal" data-bs-target="#exampleModal">Remove page</a></li>
           </ul>
+        </div>
+      </div>
+      </div>
+      <div class="modal fade" id="exampleModal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+          <div class="modal-content">
+            <div class="modal-header">
+              <h5 class="modal-title" id="exampleModalLabel">Modal title</h5>
+              <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+              ...
+            </div>
+            <div class="modal-footer">
+              <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+              <button type="button" class="btn btn-primary" id="remove-btn-mod" @click="deletePage" >Remove</button>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="toast-container position-fixed bottom-0 end-0 p-3">
+        <div id="liveToast" class="toast" role="alert" aria-live="assertive" aria-atomic="true">
+          <div class="toast-header">
+            <strong class="me-auto">Bootstrap</strong>
+            <small>11 mins ago</small>
+            <button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="Close"></button>
+          </div>
+          <div class="toast-body">
+            Hello, world! This is a toast message.
+          </div>
         </div>
       </div>
       <!-- Display engineers on shift -->
@@ -86,6 +128,7 @@
 
 <script>
 import { mapState, mapActions } from 'vuex';
+import axios from 'axios';
 
 export default {
   data() {
@@ -105,6 +148,19 @@ export default {
       }
       this.editMode = !this.editMode;
     },
+    deletePage() {
+        if (confirm('Are you sure you want to delete this page? This action cannot be undone.')) {
+            axios.delete(`/api/records/${this.currentPage.id}`)
+                .then(() => {
+                    alert('Page successfully deleted');
+                    this.$router.push({ name: 'HomePage' }); // Redirect to home page or appropriate page list
+                })
+                .catch(error => {
+                    console.error('Error deleting page:', error);
+                    alert('Error deleting page');
+                });
+        }
+    }
   },
   created() {
     const docId = this.$route.params.id; // Assuming the document ID is passed as a route parameter
@@ -115,35 +171,43 @@ export default {
 
 <style scoped>
 .main-container {
-    display: block;
+  display: block;
 }
 .list-group {
-    display: inline-block;
-    width: auto; 
-    background-color: #f8f9fa; 
-    border: 1px solid rgba(0, 0, 0, .125); 
+  display: inline-block;
+  width: auto;
+  background-color: #f8f9fa;
+  border: 1px solid rgba(0, 0, 0, .125);
 }
 
 .list-group-item {
-    display: block;
-    width: 100%;
+  display: block;
+  width: 100%;
 }
 
 .list-group-item:last-child {
-    border-bottom: none;
+  border-bottom: none;
 }
 .header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
 }
-.edit {
-    float: right;
-}
-.bi-three-dots-vertical {
+
+.bi-three-dots-vertical, .bi-plus-lg {
   color: rgb(0, 0, 0);
 }
 #remove-btn {
   color: red;
+}
+#remove-btn-mod {
+  color: red;
+  background: white;
+  border: 2px red;
+}
+.dropwdowns-opt {
+  display: flex;
+  color: rgb(0, 0, 0);
+  gap: 10px; /* Add spacing between the buttons */
 }
 </style>
