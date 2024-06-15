@@ -14,6 +14,9 @@
     created() {
       this.checkAuthentication();
     },
+    mounted() {
+      this.$store.dispatch('initializeSocket');
+    },
     methods: {
     checkAuthentication() {
       // Check authentication status (simplified for example purposes)
@@ -32,7 +35,7 @@
 <style>
 :root {
   --primary-color: #007bff;
-  --secondary-color: #6c757d;
+  --secondary-color: #828a91;
   --success-color: #28a745;
   --info-color: #17a2b8;
   --warning-color: #ffc107;

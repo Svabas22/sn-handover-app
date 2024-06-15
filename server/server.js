@@ -11,6 +11,7 @@ var createError = require('http-errors');
 const http = require('http');
 const socketIo = require('socket.io');
 var cookieParser = require('cookie-parser');
+const handoverTemplate = require('./template-page.json');
 
 const morgan = require('morgan');
 const redis = require('redis');
@@ -81,18 +82,16 @@ async function initializeCosmosDB() {
 
 initializeCosmosDB();
 
-app.post('/api/records', async (req, res) => {
-  const { name, comment } = req.body;
-  try {
-    const { database } = await client.databases.createIfNotExists({ id: databaseId });
-    const { container } = await database.containers.createIfNotExists({ id: containerId });
-    const { resource: createdItem } = await container.items.create({ name, comment });
-    res.status(201).json(createdItem);
-  } catch (error) {
-    res.status(500).json({ error: error.message });
-  }
-});
-
+// app.post('/api/records', async (req, res) => {
+//   const { name, comment } = req.body;
+//   try {
+//     const { resource: createdItem } = await container.items.create({ name, comment });
+//     res.status(201).json(createdItem);
+//     io.emit('pageCreated', createdItem); // Emit event to all clients
+//   } catch (error) {
+//     res.status(500).json({ error: error.message });
+//   }
+// });
 
 
 io.on('connection', (socket) => {
@@ -113,23 +112,6 @@ io.on('connection', (socket) => {
 
 app.set('trust proxy', 1); 
 
-// app.get('*', (req, res) => {
-//   res.sendFile(path.join(__dirname, '../client', 'dist', 'index.html'));
-// });
-
-// app.get('/api/records', async (req, res) => {
-//   try {
-//     const { database } = await client.databases.createIfNotExists({ id: databaseId });
-//     const { container } = await database.containers.createIfNotExists({ id: containerId });
-//     const { resources: items } = await container.items
-//       .query("SELECT * from c")
-//       .fetchAll();
-//     res.status(200).json(items);
-//   } catch (error) {
-//     res.status(500).json({ error: error.message });
-//   }
-// });
-
 app.post('/api/records', async (req, res) => {
   const { id, title, date, engineersOnShift, clients, pageId } = req.body; // Ensure pageId is included in the request body
   try {
@@ -139,6 +121,8 @@ app.post('/api/records', async (req, res) => {
     const newRecord = { id, title, date, engineersOnShift, clients, pageId };
     const { resource: createdItem } = await container.items.create(newRecord);
     res.status(201).json(createdItem);
+    io.emit('pageCreated', createdItem); // Emit event to all clients
+    
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
@@ -158,6 +142,59 @@ app.get('/api/records', async (req, res) => {
     res.status500().json({ error: error.message });
   }
 });
+
+app.post('/api/copy-handover', async (req, res) => {
+  try {
+      const querySpec = {
+          query: "SELECT * FROM c ORDER BY c._ts DESC OFFSET 0 LIMIT 1"
+      };
+      const { resources: items } = await container.items.query(querySpec).fetchAll();
+      if (items.length > 0) {
+          const latestDocument = items[0];
+          let newDocument = { ...latestDocument };
+          delete newDocument.id; // Ensure a new document ID is created by Cosmos DB
+
+          let today = new Date();
+          newDocument.date = today.toISOString().split('T')[0];
+          newDocument.title = `Handover ${newDocument.date} - ${today.getHours() >= 3 && today.getHours() < 15 ? 'Day' : 'Night'}`;
+
+          const { resource: createdItem } = await container.items.create(newDocument);
+          res.status(201).send(`New document created with id: ${createdItem.id}`);
+      } else {
+          res.status(404).send('No existing documents found to clone.');
+      }
+  } catch (error) {
+      console.error(`An error occurred: ${error}`);
+      res.status(500).send(`An error occurred: ${error.message}`);
+  }
+});
+
+app.post('/api/copy-template', async (req, res) => {
+  try {
+    const querySpec = {
+        query: "SELECT * FROM c ORDER BY c._ts DESC OFFSET 0 LIMIT 1"
+    };
+    const { resources: items } = await container.items.query(querySpec).fetchAll();
+    if (items.length > 0) {
+        const latestDocument = items[0];
+        let newDocument = { ...handoverTemplate };
+        delete newDocument.id; // Ensure a new document ID is created by Cosmos DB
+
+        let today = new Date();
+        newDocument.date = today.toISOString().split('T')[0];
+        newDocument.title = `Handover ${newDocument.date} - ${today.getHours() >= 3 && today.getHours() < 15 ? 'Day' : 'Night'}`;
+
+        const { resource: createdItem } = await container.items.create(newDocument);
+        res.status(201).send(`New document created with id: ${createdItem.id}`);
+    } else {
+        res.status(404).send('No existing documents found to clone.');
+    }
+  } catch (error) {
+      console.error(`An error occurred: ${error}`);
+      res.status(500).send(`An error occurred: ${error.message}`);
+  }
+});
+
 
 app.get('/api/records/:id', async (req, res) => {
   const pageId = req.params.id;

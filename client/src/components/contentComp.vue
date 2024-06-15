@@ -278,7 +278,7 @@
         <h6>{{ clientName }}</h6>
         <div v-if="client.incidents.length > 0">
           <h7>Incidents</h7>
-          <table class="table table-bordered">
+          <table class="table table-fixed">
             <thead>
               <tr>
                 <th>Incident Number</th>
@@ -316,13 +316,13 @@
                 <td>
                   <div v-if="!editMode">{{ incident.mainProblem }}</div>
                   <div v-else>
-                    <input type="text" v-model="incident.mainProblem" />
+                    <textarea type="text" v-model="incident.mainProblem" class="form-control custom-textarea"></textarea>
                   </div>
                 </td>
                 <td>
                   <div v-if="!editMode">{{ incident.notes }}</div>
                   <div v-else>
-                    <input type="text" v-model="incident.notes" />
+                    <textarea type="text" v-model="incident.notes" class="form-control custom-textarea"></textarea>
                   </div>
                 </td>
               </tr>
@@ -331,7 +331,7 @@
         </div>
         <div v-if="client.problems.length > 0">
           <h7>Problems</h7>
-          <table class="table table-bordered">
+          <table class="table table-fixed">
             <thead>
               <tr>
                 <th>Problem Number</th>
@@ -369,13 +369,13 @@
                 <td>
                   <div v-if="!editMode">{{ problem.rca }}</div>
                   <div v-else>
-                    <input type="text" v-model="problem.rca" />
+                    <textarea type="text" v-model="problem.rca" class="form-control custom-textarea"></textarea>
                   </div>
                 </td>
                 <td>
                   <div v-if="!editMode">{{ problem.notes }}</div>
                   <div v-else>
-                    <input type="text" v-model="problem.notes" />
+                    <textarea type="text" v-model="problem.notes" class="form-control custom-textarea"></textarea>
                   </div>
                 </td>
               </tr>
@@ -385,7 +385,7 @@
 
         <div v-if="client.changes.length > 0">
           <h7>Changes</h7>
-          <table class="table table-bordered">
+          <table class="table table-fixed">
             <thead>
               <tr>
                 <th>Change Number</th>
@@ -415,16 +415,19 @@
                 <td>
                   <div v-if="!editMode">{{ change.startDate }}</div>
                   <div v-else>
-                    
+                    <input type="datetime-local" class="form-control" id="startDate" v-model="change.startDate"/>
                   </div>
                 </td>
                 <td>
                   <div v-if="!editMode">{{ change.endDate }}</div>
+                  <div v-else>
+                    <input type="datetime-local" class="form-control" id="endDate" v-model="change.endDate"/>
+                  </div>
                 </td>
                 <td>
                   <div v-if="!editMode">{{ change.notes }}</div>
                   <div v-else>
-                    <input type="text" v-model="change.notes" />
+                    <textarea type="text" v-model="change.notes" class="form-control custom-textarea"></textarea>
                   </div>
                 </td>
               </tr>
@@ -434,7 +437,7 @@
 
         <div v-if="client.serviceRequests.length > 0">
           <h7>Service Requests</h7>
-          <table class="table table-bordered">
+          <table class="table table-fixed">
             <thead>
               <tr>
                 <th>Request Number</th>
@@ -448,13 +451,13 @@
                 <td>
                   <div v-if="!editMode">{{ request.desc }}</div>
                   <div v-else>
-                    <input type="text" v-model="request.desc" />
+                    <textarea type="text" v-model="request.desc" class="form-control custom-textarea"></textarea>
                   </div>
                 </td>
                 <td>
                   <div v-if="!editMode">{{ request.notes }}</div>
                   <div v-else>
-                    <input type="text" v-model="request.notes" />
+                    <textarea type="text" v-model="request.notes" class="form-control custom-textarea"></textarea>
                   </div>
                 </td>
               </tr>
@@ -662,42 +665,54 @@ export default {
 <style scoped>
 .main-container {
   display: block;
-}
-.list-group {
-  display: inline-block;
-  width: auto;
-  background-color: #f8f9fa;
-  border: 1px solid rgba(0, 0, 0, .125);
-}
-
-.list-group-item {
-  display: block;
   width: 100%;
+  max-height: calc(100vh - 70px);  /* Adjust the height by subtracting the height of your navbar */
+  overflow-y: auto;  /* Enables vertical scrolling inside the main-container */
 }
 
-.list-group-item:last-child {
-  border-bottom: none;
-}
 .header {
   display: flex;
   justify-content: space-between;
   align-items: center;
+  position: sticky;  /* Makes the header sticky */
+  top: 0;  /* Stick to the top of the main-container */
+  background: white;  /* Background color to ensure text is readable */
+  z-index: 10;  /* Higher index to keep it above other content */
 }
 
 .bi-three-dots-vertical, .bi-plus-lg {
   color: rgb(0, 0, 0);
 }
-#remove-btn {
-  color: red;
-}
-#remove-btn-mod {
+
+#remove-btn, #remove-btn-mod {
   color: red;
   background: white;
-  border: 2px red;
 }
+
 .dropwdowns-opt {
   display: flex;
   color: rgb(0, 0, 0);
-  gap: 10px; /* Add spacing between the buttons */
+  gap: 10px;  /* Maintain spacing between buttons */
+}
+
+.table-fixed {
+  width: 100%;
+  table-layout: fixed;
+}
+
+.table-fixed th, .table-fixed td {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;  /* Ensures no text wrap in table cells */
+}
+
+.custom-textarea {
+  width: 100%;
+  height: auto;
+  resize: both;  /* Allows resizing */
+  font-size: 1rem;
+  padding: 0.5rem;
+  white-space: pre-wrap;  /* Maintains white space formatting */
+  word-wrap: break-word;  /* Wraps long words */
 }
 </style>
