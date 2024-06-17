@@ -510,7 +510,7 @@ export default {
     };
   },
   computed: {
-    ...mapState(['currentPage']),
+    ...mapState(['currentPage', 'pages']),
   },
   methods: {
     ...mapActions(['fetchPageDetails', 'updatePageDetails', 'deletePage', 'addToast', 'fetchPages']),
@@ -654,16 +654,31 @@ export default {
           this.addToast({ message: `Failed to delete the page: ${error.message}`, type: 'danger' });
         }
       }
+    },
+    handlePageUpdated(data) {
+      console.log('Page updated:', data); // Add logging for client-side updates
+      const index = this.pages.findIndex(page => page.id === data.id);
+      if (index !== -1) {
+        this.$set(this.pages, index, data);
+        if (this.currentPage && this.currentPage.id === data.id) {
+          this.currentPage = data;
+        }
+      }
     }
   },
   created() {
     const docId = this.$route.params.id;
     if (docId) {
     this.fetchPageDetails(docId);
-  } else {
+  } 
+  else {
     console.error("Page ID is undefined.");
   }
+  this.$socket.on('pageUpdated', this.handlePageUpdated);
   },
+  beforeDestroy() {
+    this.$socket.off('pageUpdated', this.handlePageUpdated);
+  }
 };
 </script>
 

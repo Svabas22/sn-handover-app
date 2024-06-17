@@ -86,6 +86,15 @@ initializeCosmosDB();
 
 app.set('trust proxy', 1);
 
+app.post('/api/real-time-updates', (req, res) => {
+  const changes = req.body;
+  console.log('Received real-time updates:', changes); // Add logging
+  changes.forEach(change => {
+    io.emit('pageUpdated', change);
+  });
+  res.status(200).send('Changes broadcasted.');
+});
+
 io.on('connection', (socket) => {
   console.log('New client connected');
   
@@ -95,6 +104,10 @@ io.on('connection', (socket) => {
 
   socket.on('editPage', (data) => {
     io.emit('pageUpdated', data);
+  });
+
+  socket.on('deletePage', (data) => {
+    io.emit('pageDeleted', data);
   });
 });
 
@@ -232,13 +245,7 @@ app.delete('/api/records/:id', async (req, res) => {
   }
 });
 
-app.post('/api/real-time-updates', (req, res) => {
-  const changes = req.body;
-  changes.forEach(change => {
-    io.emit('pageUpdated', change);
-  });
-  res.status(200).send('Changes broadcasted.');
-});
+
 
 const PORT = process.env.PORT || 3000;
 server.listen(PORT, () => {
