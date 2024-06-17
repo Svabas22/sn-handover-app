@@ -515,8 +515,9 @@ export default {
   methods: {
     ...mapActions(['fetchPageDetails', 'updatePageDetails', 'deletePage', 'addToast', 'fetchPages']),
     toggleEditMode() {
-      if (this.editMode) {
+      if (this.editMode) {  
         this.updatePageDetails(this.currentPage);
+        this.$socket.emit('editPage', this.currentPage);
       }
       this.editMode = !this.editMode;
     },
@@ -534,6 +535,7 @@ export default {
 
       try {
         await this.updatePageDetails(this.currentPage);
+        this.$socket.emit('editPage', this.currentPage);
         this.resetNewIncident();
         this.$router.push({ name: 'HomePage' });
       } catch (error) {
@@ -565,6 +567,7 @@ export default {
 
       try {
         await this.updatePageDetails(this.currentPage);
+        this.$socket.emit('editPage', this.currentPage);
         this.resetNewProblem();
         this.$router.push({ name: 'HomePage' });
       } catch (error) {
@@ -595,6 +598,7 @@ export default {
 
       try {
         await this.updatePageDetails(this.currentPage);
+        this.$socket.emit('editPage', this.currentPage);
         this.resetNewChange();
         this.closeModal('addChangeModal');
       } catch (error) {
@@ -623,6 +627,7 @@ export default {
 
       try {
         await this.updatePageDetails(this.currentPage);
+        this.$socket.emit('editPage', this.currentPage);
         this.resetNewRequest();
         this.closeModal('addRequestModal');
       } catch (error) {
@@ -640,14 +645,14 @@ export default {
     },
     async removePage() {
       if (confirm('Are you sure you want to delete this page? This action cannot be undone.')) {
-      this.deletePage(this.currentPage.id)
-        .then(() => {
+        try {
+          await this.deletePage(this.currentPage.id);
+          this.$socket.emit('deletePage', { id: this.currentPage.id }); // Emit event to notify others
           this.$router.push({ name: 'HomePage' }); // Redirect or handle the navigation
-        })
-        .catch(error => {
+        } catch (error) {
           console.error('Failed to delete the page:', error);
           this.addToast({ message: `Failed to delete the page: ${error.message}`, type: 'danger' });
-        });
+        }
       }
     }
   },

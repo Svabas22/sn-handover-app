@@ -7,13 +7,25 @@ import 'bootstrap-icons/font/bootstrap-icons.css';
 import store from './store';
 import App from './App.vue';
 import router from './router';
+import io from 'socket.io-client';
+
+const socket = io(process.env.SOCKET_URI || 'http://localhost:3000');
 
 // Create Vue application
 const app = createApp(App);
+app.config.globalProperties.$socket = socket;
 app.use(router);
 app.use(bootstrap);
 app.use(store);
 //app.mount('#app');
+
+socket.on('connect', () => {
+  console.log('Connected to Socket.IO server');
+});
+
+socket.on('disconnect', () => {
+  console.log('Disconnected from Socket.IO server');
+});
 
 // Check authentication status before mounting the app
 axios.get('/auth/status')

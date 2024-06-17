@@ -1,10 +1,10 @@
 import { createStore } from 'vuex';
-//import io from 'socket.io-client';
+import io from 'socket.io-client';
 
 // Ensure that the SOCKET_URI is correctly configured in your environment variables
-//const socket = io(process.env.SOCKET_URI);  
+const socket = io(process.env.SOCKET_URI || 'http://localhost:3000');  
 
-export default createStore({
+const store = createStore({
   state: {
     pages: [],
     currentPage: null,
@@ -21,6 +21,12 @@ export default createStore({
     addPage(state, page) {
       state.pages.push(page);
     },
+    updatePage(state, page) {
+      const index = state.pages.findIndex(p => p.id === page.id);
+      if (index !== -1) {
+        state.pages.splice(index, 1, page);
+      }
+    },
     addToast(state, toast) {
       const id = state.toastId++;
       toast.id = id;
@@ -36,17 +42,7 @@ export default createStore({
     }
   },
   actions: {
-    // initializeSocket({ commit }) {
-    //   socket.on('pageCreated', (newPage) => {
-    //     commit('addPage', newPage);
-    //     commit('setCurrentPage', newPage);
-    //     commit('addToast', { message: 'New page created via Socket.', type: 'info' });
-    //   });
 
-    //   socket.on('connectionError', error => {
-    //     commit('addToast', { message: `Socket error: ${error}`, type: 'danger' });
-    //   });
-    // },
     async fetchPages({ commit, dispatch }) {
       try {
         const response = await fetch('/api/records');
@@ -98,6 +94,7 @@ export default createStore({
         }
         const data = await response.json();
         commit('setCurrentPage', data);
+        commit('updatePage', data);
         commit('addToast', { message: 'Page details updated successfully.', type: 'success' });
       } catch (error) {
         console.error('Error updating page details:', error);
@@ -147,3 +144,17 @@ export default createStore({
     }
   },
 });
+
+socket.on('pageCreated', (data) => {
+  store.commit('addPage', data);
+});
+
+socket.on('pageUpdated', (data) => {
+  store.commit('updatePage', data);
+});
+
+socket.on('pageDeleted', (data) => {
+  store.commit('removePage', data.id);
+});
+
+export default store;

@@ -6,42 +6,42 @@ if (process.env.ENVR === 'dev') {
 const express = require('express');
 const cors = require('cors');
 const path = require('path');
-var session = require('express-session');
-var createError = require('http-errors');
+const session = require('express-session');
 const http = require('http');
 const socketIo = require('socket.io');
-var cookieParser = require('cookie-parser');
-const handoverTemplate = require('./template-page.json');
-
+const cookieParser = require('cookie-parser');
 const morgan = require('morgan');
 const redis = require('redis');
-var indexRouter = require('./routes/index');
-var usersRouter = require('./routes/users');
-var authRouter = require('./routes/auth');
 const RedisStore = require('connect-redis').default;
 const { CosmosClient } = require("@azure/cosmos");
-const endpoint = process.env.COSMOS_DB_ENDPOINT;
-const key = process.env.COSMOS_DB_KEY;
-const databaseId = "handoversys";
-const containerId = "snRecords";
+
+const indexRouter = require('./routes/index');
+const usersRouter = require('./routes/users');
+const authRouter = require('./routes/auth');
+const handoverTemplate = require('./template-page.json');
 
 const app = express();
 const server = http.createServer(app);
-const io = socketIo(server);
+const io = socketIo(server, {
+  cors: {
+    origin: '*', // Allow all origins for simplicity
+    methods: ["GET", "POST"]
+  }
+});
+
 app.use(cors());
 app.use(express.json());
 app.use(cookieParser());
 app.use(express.urlencoded({ extended: false }));
 
-
 const redisClient = redis.createClient({
   url: process.env.REDIS_KEY,
-  //legacyMode: true,
   tls: {
     rejectUnauthorized: process.env.ENVR === 'production'
   }
 });
 redisClient.connect().catch(console.error);
+
 redisClient.on('connect', () => {
   console.log('Redis connected');
 });
@@ -56,8 +56,8 @@ app.use(session({
   resave: false,
   saveUninitialized: true,
   cookie: {
-      httpOnly: true,
-      secure: process.env.ENVR === 'production', // set this to true on production
+    httpOnly: true,
+    secure: process.env.ENVR === 'production',
   }
 }));
 
@@ -66,14 +66,16 @@ app.use('/', indexRouter);
 app.use('/users', usersRouter);
 app.use('/auth', authRouter);
 
-//Cosmos DB config
+const endpoint = process.env.COSMOS_DB_ENDPOINT;
+const key = process.env.COSMOS_DB_KEY;
+const databaseId = "handoversys";
+const containerId = "snRecords";
 const client = new CosmosClient({ endpoint, key });
-app.use(morgan('combined'));
-
+let container;
 
 async function initializeCosmosDB() {
   try {
-    database = (await client.databases.createIfNotExists({ id: databaseId })).database;
+    const database = (await client.databases.createIfNotExists({ id: databaseId })).database;
     container = (await database.containers.createIfNotExists({ id: containerId })).container;
   } catch (error) {
     console.error('Error initializing Cosmos DB:', error);
@@ -82,38 +84,22 @@ async function initializeCosmosDB() {
 
 initializeCosmosDB();
 
-// app.post('/api/records', async (req, res) => {
-//   const { name, comment } = req.body;
-//   try {
-//     const { resource: createdItem } = await container.items.create({ name, comment });
-//     res.status(201).json(createdItem);
-//     io.emit('pageCreated', createdItem); // Emit event to all clients
-//   } catch (error) {
-//     res.status(500).json({ error: error.message });
-//   }
-// });
+app.set('trust proxy', 1);
 
+io.on('connection', (socket) => {
+  console.log('New client connected');
+  
+  socket.on('disconnect', () => {
+    console.log('Client disconnected');
+  });
 
-// io.on('connection', (socket) => {
-//   console.log('A user connected');
-
-//   // Listening for an event from the client about the new record
-//   socket.on('createRecord', (newRecord) => {
-//       // Here you can also add the new record to the database if not already done
-
-//       // Broadcast the new record to all clients except the sender
-//       socket.broadcast.emit('recordCreated', newRecord);
-//   });
-
-//   socket.on('disconnect', () => {
-//       console.log('User disconnected');
-//   });
-// });
-
-app.set('trust proxy', 1); 
+  socket.on('editPage', (data) => {
+    io.emit('pageUpdated', data);
+  });
+});
 
 app.post('/api/records', async (req, res) => {
-  const { id, title, date, engineersOnShift, clients, pageId } = req.body; // Ensure pageId is included in the request body
+  const { id, title, date, engineersOnShift, clients, pageId } = req.body;
   try {
     if (!container) {
       throw new Error('Cosmos DB container is not initialized');
@@ -121,8 +107,7 @@ app.post('/api/records', async (req, res) => {
     const newRecord = { id, title, date, engineersOnShift, clients, pageId };
     const { resource: createdItem } = await container.items.create(newRecord);
     res.status(201).json(createdItem);
-    //io.emit('pageCreated', createdItem); // Emit event to all clients
-    
+    io.emit('pageCreated', createdItem);
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
@@ -145,56 +130,54 @@ app.get('/api/records', async (req, res) => {
 
 app.post('/api/copy-handover', async (req, res) => {
   try {
-      const querySpec = {
-          query: "SELECT * FROM c ORDER BY c._ts DESC OFFSET 0 LIMIT 1"
-      };
-      const { resources: items } = await container.items.query(querySpec).fetchAll();
-      if (items.length > 0) {
-          const latestDocument = items[0];
-          let newDocument = { ...latestDocument };
-          delete newDocument.id; // Ensure a new document ID is created by Cosmos DB
+    const querySpec = {
+      query: "SELECT * FROM c ORDER BY c._ts DESC OFFSET 0 LIMIT 1"
+    };
+    const { resources: items } = await container.items.query(querySpec).fetchAll();
+    if (items.length > 0) {
+      const latestDocument = items[0];
+      let newDocument = { ...latestDocument };
+      delete newDocument.id;
 
-          let today = new Date();
-          newDocument.date = today.toISOString().split('T')[0];
-          newDocument.title = `Handover ${newDocument.date} - ${today.getHours() >= 3 && today.getHours() < 15 ? 'Day' : 'Night'}`;
+      let today = new Date();
+      newDocument.date = today.toISOString().split('T')[0];
+      newDocument.title = `Handover ${newDocument.date} - ${today.getHours() >= 3 && today.getHours() < 15 ? 'Day' : 'Night'}`;
 
-          const { resource: createdItem } = await container.items.create(newDocument);
-          res.status(201).send(`New document created with id: ${createdItem.id}`);
-      } else {
-          res.status(404).send('No existing documents found to clone.');
-      }
+      const { resource: createdItem } = await container.items.create(newDocument);
+      res.status(201).send(`New document created with id: ${createdItem.id}`);
+      io.emit('pageCreated', createdItem);
+    } else {
+      res.status(404).send('No existing documents found to clone.');
+    }
   } catch (error) {
-      console.error(`An error occurred: ${error}`);
-      res.status(500).send(`An error occurred: ${error.message}`);
+    res.status(500).send(`An error occurred: ${error.message}`);
   }
 });
 
 app.post('/api/copy-template', async (req, res) => {
   try {
     const querySpec = {
-        query: "SELECT * FROM c ORDER BY c._ts DESC OFFSET 0 LIMIT 1"
+      query: "SELECT * FROM c ORDER BY c._ts DESC OFFSET 0 LIMIT 1"
     };
     const { resources: items } = await container.items.query(querySpec).fetchAll();
     if (items.length > 0) {
-        const latestDocument = items[0];
-        let newDocument = { ...handoverTemplate };
-        delete newDocument.id; // Ensure a new document ID is created by Cosmos DB
+      let newDocument = { ...handoverTemplate };
+      delete newDocument.id;
 
-        let today = new Date();
-        newDocument.date = today.toISOString().split('T')[0];
-        newDocument.title = `Handover ${newDocument.date} - ${today.getHours() >= 3 && today.getHours() < 15 ? 'Day' : 'Night'}`;
+      let today = new Date();
+      newDocument.date = today.toISOString().split('T')[0];
+      newDocument.title = `Handover ${newDocument.date} - ${today.getHours() >= 3 && today.getHours() < 15 ? 'Day' : 'Night'}`;
 
-        const { resource: createdItem } = await container.items.create(newDocument);
-        res.status(201).send(`New document created with id: ${createdItem.id}`);
+      const { resource: createdItem } = await container.items.create(newDocument);
+      res.status(201).send(`New document created with id: ${createdItem.id}`);
+      io.emit('pageCreated', createdItem);
     } else {
-        res.status(404).send('No existing documents found to clone.');
+      res.status(404).send('No existing documents found to clone.');
     }
   } catch (error) {
-      console.error(`An error occurred: ${error}`);
-      res.status(500).send(`An error occurred: ${error.message}`);
+    res.status(500).send(`An error occurred: ${error.message}`);
   }
 });
-
 
 app.get('/api/records/:id', async (req, res) => {
   const pageId = req.params.id;
@@ -223,36 +206,41 @@ app.put('/api/records/:id', async (req, res) => {
     if (!container) {
       throw new Error('Cosmos DB container is not initialized');
     }
-    const partitionKey = updatedDocument.pageId; // Ensure the partition key is in the updated document
+    const partitionKey = updatedDocument.pageId;
     const { resource: doc } = await container.item(pageId, partitionKey).replace(updatedDocument);
     res.status(200).json(doc);
+    io.emit('pageUpdated', doc);
   } catch (error) {
-    console.error('Error updating record:', error);
     res.status(500).json({ error: error.message });
   }
 });
 
 app.delete('/api/records/:id', async (req, res) => {
   const pageId = req.params.id;
-  const partitionKey = req.body.pageId; // Ensure the partition key is provided in the request body
+  const partitionKey = req.body.pageId;
   try {
     if (!container) {
       throw new Error('Cosmos DB container is not initialized');
     }
     const { resource: result } = await container.item(pageId, partitionKey).delete();
     if (result) {
-      res.status(204).send(); // No Content, deletion successful
+      res.status(204).send();
+      io.emit('pageDeleted', { id: pageId });
     }
   } catch (error) {
-    console.error('Failed to delete record:', error);
     res.status(500).json({ error: "An internal error occurred while deleting the record." });
   }
 });
 
-
-
-const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => {
-  console.log(`Server is running on port ${PORT}`);
+app.post('/api/real-time-updates', (req, res) => {
+  const changes = req.body;
+  changes.forEach(change => {
+    io.emit('pageUpdated', change);
+  });
+  res.status(200).send('Changes broadcasted.');
 });
 
+const PORT = process.env.PORT || 3000;
+server.listen(PORT, () => {
+  console.log(`Server is running on port ${PORT}`);
+});
