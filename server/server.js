@@ -94,21 +94,21 @@ initializeCosmosDB();
 // });
 
 
-io.on('connection', (socket) => {
-  console.log('A user connected');
+// io.on('connection', (socket) => {
+//   console.log('A user connected');
 
-  // Listening for an event from the client about the new record
-  socket.on('createRecord', (newRecord) => {
-      // Here you can also add the new record to the database if not already done
+//   // Listening for an event from the client about the new record
+//   socket.on('createRecord', (newRecord) => {
+//       // Here you can also add the new record to the database if not already done
 
-      // Broadcast the new record to all clients except the sender
-      socket.broadcast.emit('recordCreated', newRecord);
-  });
+//       // Broadcast the new record to all clients except the sender
+//       socket.broadcast.emit('recordCreated', newRecord);
+//   });
 
-  socket.on('disconnect', () => {
-      console.log('User disconnected');
-  });
-});
+//   socket.on('disconnect', () => {
+//       console.log('User disconnected');
+//   });
+// });
 
 app.set('trust proxy', 1); 
 
@@ -121,7 +121,7 @@ app.post('/api/records', async (req, res) => {
     const newRecord = { id, title, date, engineersOnShift, clients, pageId };
     const { resource: createdItem } = await container.items.create(newRecord);
     res.status(201).json(createdItem);
-    io.emit('pageCreated', createdItem); // Emit event to all clients
+    //io.emit('pageCreated', createdItem); // Emit event to all clients
     
   } catch (error) {
     res.status(500).json({ error: error.message });
@@ -139,7 +139,7 @@ app.get('/api/records', async (req, res) => {
     const { resources: items } = await container.items.query(querySpec).fetchAll();
     res.status(200).json(items);
   } catch (error) {
-    res.status500().json({ error: error.message });
+    res.status(500).json({ error: error.message });
   }
 });
 

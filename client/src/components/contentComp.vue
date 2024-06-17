@@ -22,7 +22,7 @@
             <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="dropdownMenuButton">
               <li><a class="dropdown-item" @click="toggleEditMode">{{ editMode ? 'Save' : 'Edit' }}</a></li>
               <li><hr class="dropdown-divider"></li>
-              <li><a class="dropdown-item" id="remove-btn" href="#" data-bs-toggle="modal" data-bs-target="#exampleModal">Remove page</a></li>
+              <li><a class="dropdown-item" id="remove-btn" href="#" data-bs-toggle="modal" data-bs-target="#removePageModal">Remove page</a></li>
             </ul>
           </div>
         </div>
@@ -235,19 +235,15 @@
         </div>
       </div>
       <!-- Remove page Modal -->
-      <div class="modal fade" id="exampleModal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+      <div class="modal fade" id="removePageModal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered">
           <div class="modal-content">
-            <div class="modal-header">
-              <h5 class="modal-title" id="exampleModalLabel">Modal title</h5>
-              <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
             <div class="modal-body">
               Are you sure you want to remove {{ currentPage.title }}? This action cannot be undone.
             </div>
             <div class="modal-footer">
               <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-              <button type="button" class="btn btn-primary" id="liveToastBtn" @click="deletePage" >Remove</button>
+              <button type="button" class="btn btn-primary" id="liveToastBtn" @click="removePage" >Remove</button>
             </div>
           </div>
         </div>
@@ -473,7 +469,8 @@
 
 <script>
 import { mapState, mapActions } from 'vuex';
-import axios from 'axios';
+//import axios from 'axios';
+
 
 export default {
   data() {
@@ -516,7 +513,7 @@ export default {
     ...mapState(['currentPage']),
   },
   methods: {
-    ...mapActions(['fetchPageDetails', 'updatePageDetails']),
+    ...mapActions(['fetchPageDetails', 'updatePageDetails', 'deletePage', 'addToast', 'fetchPages']),
     toggleEditMode() {
       if (this.editMode) {
         this.updatePageDetails(this.currentPage);
@@ -538,10 +535,10 @@ export default {
       try {
         await this.updatePageDetails(this.currentPage);
         this.resetNewIncident();
-        this.closeModal('addIncidentModal');
+        this.$router.push({ name: 'HomePage' });
       } catch (error) {
         console.error('Error saving incident:', error);
-        alert('Failed to save incident');
+        this.addToast({ message: 'Error saving incident:', type: 'danger' });
       }
     },
     resetNewIncident() {
@@ -569,10 +566,10 @@ export default {
       try {
         await this.updatePageDetails(this.currentPage);
         this.resetNewProblem();
-        this.closeModal('addProblemModal');
+        this.$router.push({ name: 'HomePage' });
       } catch (error) {
         console.error('Error saving problem:', error);
-        alert('Failed to save problem');
+        this.addToast({ message: 'Error saving problem:', type: 'danger' });
       }
     },
     resetNewProblem() {
@@ -602,7 +599,7 @@ export default {
         this.closeModal('addChangeModal');
       } catch (error) {
         console.error('Error saving change:', error);
-        alert('Failed to save change');
+        this.addToast({ message: 'Error saving change:', type: 'danger' });
       }
     },
     resetNewChange() {
@@ -630,7 +627,7 @@ export default {
         this.closeModal('addRequestModal');
       } catch (error) {
         console.error('Error saving service request:', error);
-        alert('Failed to save service request');
+        this.addToast({ message: 'Error saving service request:', type: 'danger' });
       }
     },
     resetNewRequest() {
@@ -641,23 +638,26 @@ export default {
         notes: ''
       };
     },
-    deletePage() {
+    async removePage() {
       if (confirm('Are you sure you want to delete this page? This action cannot be undone.')) {
-        axios.delete(`/api/records/${this.currentPage.id}`)
-          .then(() => {
-            alert('Page successfully deleted');
-            this.$router.push({ name: 'HomePage' });
-          })
-          .catch(error => {
-            console.error('Error deleting page:', error);
-            alert('Error deleting page');
-          });
+      this.deletePage(this.currentPage.id)
+        .then(() => {
+          this.$router.push({ name: 'HomePage' }); // Redirect or handle the navigation
+        })
+        .catch(error => {
+          console.error('Failed to delete the page:', error);
+          this.addToast({ message: `Failed to delete the page: ${error.message}`, type: 'danger' });
+        });
       }
     }
   },
   created() {
     const docId = this.$route.params.id;
+    if (docId) {
     this.fetchPageDetails(docId);
+  } else {
+    console.error("Page ID is undefined.");
+  }
   },
 };
 </script>

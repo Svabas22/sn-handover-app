@@ -1,38 +1,34 @@
 <template>
   <div class="sidebar-comp d-flex flex-column">
-    <div class="flex-shrink-0 p-3 bg-light sidebar-content">
+    <div class="flex-shrink-0 p-3 bg-light">
       <div class="pb-3 mb-3 border-bottom">
         <input v-model="searchQuery" type="text" class="form-control" placeholder="Enter page title">
       </div>
-      <div class="nav-pills-wrapper flex-grow-1 overflow-auto">
-        <ul class="nav nav-pills flex-column mb-auto">
-          <li class="nav-item">
-            <ul class="nav flex-column">
-              <li class="nav-item" v-for="page in filteredPages" :key="page.id">
-                <a href="#" class="nav-link link-dark" :class="{ active: page.id === currentPage?.id }" @click="loadPage(page.id)">
-                  {{ page.title }}
-                </a>
-              </li>
-            </ul>
-          </li>
-        </ul>
-      </div>
     </div>
-    <hr>
-    <div class="dropup w-100">
+    <div class="nav-pills-wrapper flex-grow-1 overflow-auto">
+      <ul class="nav nav-pills flex-column">
+        <li class="nav-item" v-for="page in filteredPages" :key="page.id">
+          <a href="#" class="nav-link link-dark" :class="{ active: page.id === currentPage?.id }" @click="loadPage(page.id)">
+            {{ page.title }}
+          </a>
+        </li>
+      </ul>
+    </div>
+    <div class="dropup">
       <button class="btn btn-secondary dropdown-toggle w-100" type="button" id="dropupMenuButton" data-bs-toggle="dropdown" aria-expanded="false">
         New Page
       </button>
       <ul class="dropdown-menu w-100" aria-labelledby="dropupMenuButton">
-        <li><a class="dropdown-item" href="#" @click="copyLastPageWithData">Copy last handover</a></li>
-        <li><a class="dropdown-item" href="#" @click="copyLastPageTemplateOnly">Create a new page</a></li>
+        <li><a class="dropdown-item" href="#" @click="createNewHandoverWithData">Copy last handover</a></li>
+        <li><a class="dropdown-item" href="#" @click="createNewTemplateHandover">Create a new page</a></li>
       </ul>
     </div>
-  </div>
+  </div> 
 </template>
 
 <script>
 import { mapActions, mapState } from 'vuex';
+
 export default {
   name: 'SidebarComponent',
   data() {
@@ -47,15 +43,25 @@ export default {
     }
   },
   methods: {
-    ...mapActions(['fetchPages', 'fetchPageDetails', 'createHandoverTemplate', 'copyHandover']),
+    ...mapActions(['fetchPages', 'fetchPageDetails', 'createHandoverTemplate', 'copyHandover', 'addToast']),
     loadPage(pageId) {
       this.fetchPageDetails(pageId);
     },
     createNewHandoverWithData() {
-      this.copyHandover();
+      this.copyHandover().then(() => {
+        this.addToast({ message: 'New handover created successfully.', type: 'success' });
+      }).catch((error) => {
+        this.addToast({ message: `Error: ${error.message}`, type: 'danger' });
+      });
     },
     createNewTemplateHandover() {
-      this.createHandoverTemplate();
+      this.createHandoverTemplate()
+      .then(() => {
+        this.addToast({ message: 'New template created successfully.', type: 'success' });
+      })
+      .catch(error => {
+        this.addToast({ message: `Failed to create template ${error.message}`, type: 'danger' });
+      });
     }
   },
   created() {
@@ -63,6 +69,7 @@ export default {
   }
 }
 </script>
+
 
 <style lang="scss" scoped>
 .sidebar-comp {
@@ -101,5 +108,11 @@ export default {
   right: 0;
   background-color: white;
   padding: 0.75rem;
+}
+.toast-container {
+  position: fixed;
+  bottom: 0;
+  right: 0;
+  z-index: 1050; // Ensures it's above most other elements
 }
 </style>

@@ -3,7 +3,6 @@
 </template>
 
 <script>
-
   export default {
     name: 'App',
     data() {
@@ -14,9 +13,9 @@
     created() {
       this.checkAuthentication();
     },
-    mounted() {
-      this.$store.dispatch('initializeSocket');
-    },
+    // mounted() {
+    //   this.$store.dispatch('initializeSocket');
+    // },
     methods: {
     checkAuthentication() {
       // Check authentication status (simplified for example purposes)
