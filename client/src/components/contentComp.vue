@@ -676,7 +676,7 @@ export default {
   }
   this.$socket.on('pageUpdated', this.handlePageUpdated);
   },
-  beforeDestroy() {
+  beforeUnmount() {
     this.$socket.off('pageUpdated', this.handlePageUpdated);
   }
 };
