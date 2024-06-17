@@ -2,8 +2,8 @@ import { createStore } from 'vuex';
 import io from 'socket.io-client';
 
 // Ensure that the SOCKET_URI is correctly configured in your environment variables
-const socket = io(process.env.SOCKET_URI || 'http://localhost:3000');  
-
+//const socket = io('http://localhost:3000');
+const socket = io('https://sn-handover-app.azurewebsites.net');
 const store = createStore({
   state: {
     pages: [],
