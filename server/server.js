@@ -118,10 +118,8 @@ app.get('/api/search', async (req, res) => {
   }
   try {
     const querySpec = {
-      query: "SELECT c.id, c.title, c.date, c.engineersOnShift, c.clients FROM c WHERE CONTAINS(c.title, @searchQuery) OR CONTAINS(c.clients, @searchQuery)",
-      parameters: [
-        { name: "@searchQuery", value: searchQuery }
-      ]
+      query: "SELECT c.id, c.title FROM c WHERE CONTAINS(c.title, @searchQuery)",
+      parameters: [{ name: "@searchQuery", value: searchQuery }]
     };
     const { resources: items } = await container.items.query(querySpec).fetchAll();
     res.status(200).json(items);
@@ -129,7 +127,6 @@ app.get('/api/search', async (req, res) => {
     res.status(500).json({ error: error.message });
   }
 });
-
 
 app.post('/api/records', async (req, res) => {
   const { id, title, date, engineersOnShift, clients, pageId } = req.body;

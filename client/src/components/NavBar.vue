@@ -22,9 +22,16 @@
             <a class="nav-link" href="#">Shifts</a>
           </li>
         </ul>
-        <form class="d-flex" role="search">
-          <input class="form-control me-2" v-model="searchQuery" type="search" placeholder="Search" aria-label="Search">
+        <form class="d-flex" role="search" @submit.prevent="performSearch">
+          <input class="form-control me-2" v-model="searchQuery" type="search" placeholder="Search" aria-label="Search" @input="debounceSearch">
         </form>
+        <div v-if="searchResults.length" class="search-results">
+          <ul>
+            <li v-for="result in searchResults" :key="result.id">
+              {{ result.title }}
+            </li>
+          </ul>
+        </div>
         <ul class="navbar-nav">
           <li class="nav-item dropdown">
             <a class="nav-link dropdown-toggle" href="#" id="navbarDropdownMenuLink" role="button" data-bs-toggle="dropdown" aria-expanded="false">
@@ -42,6 +49,8 @@
 
 <script>
 import 'bootstrap/dist/js/bootstrap.bundle.js';
+import { debounce } from 'lodash';
+import { mapActions, mapState } from 'vuex';
 export default {
   name: 'NavBarComponent',
   data() {
@@ -50,11 +59,15 @@ export default {
       searchQuery: ''
     };
   },
+  computed: {
+    ...mapState(['searchResults']),
+  },
   methods: {
-    emitSearch() {
-      this.$emit('search', this.searchQuery);
-    }
-  }
+    ...mapActions(['performSearch']),
+    debounceSearch: debounce(function () {
+      this.performSearch(this.searchQuery);
+    }, 300),
+  },
 };
 </script>
 
@@ -91,5 +104,19 @@ li a:hover {
 .navbar-nav img {
   vertical-align: middle;
   border-radius: 50%;
+}
+.search-results ul {
+  position: absolute;
+  background: white;
+  list-style-type: none;
+  width: 100%;
+  z-index: 1000;
+}
+.search-results li {
+  padding: 10px;
+  border-bottom: 1px solid #ccc;
+}
+.search-results li:last-child {
+  border-bottom: none;
 }
 </style>

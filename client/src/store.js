@@ -10,6 +10,7 @@ const store = createStore({
     currentPage: null,
     toasts: [],  // Array to hold toast messages
     toastId: 0,
+    searchResults: [],
   },
   mutations: {
     setPages(state, pages) {
@@ -39,7 +40,10 @@ const store = createStore({
     deletePage(state, pageId) {
       state.pages = state.pages.filter(p => p.id !== pageId);
       state.currentPage = null;
-    }
+    },
+    setSearchResults(state, results) {
+      state.searchResults = results;
+    },
   },
   actions: {
 
@@ -57,6 +61,20 @@ const store = createStore({
       } catch (error) {
         console.error('Error fetching pages:', error);
         commit('addToast', { message: `Fetch pages error: ${error.message}`, type: 'danger' });
+      }
+    },
+    async performSearch({ commit }, searchTerm) {
+      try {
+        const response = await fetch(`/api/search?q=${encodeURIComponent(searchTerm)}`);
+        if (!response.ok) {
+          throw new Error('Network response was not ok');
+        }
+        const results = await response.json();
+        commit('setSearchResults', results);
+        commit('addToast', { message: 'Search completed successfully.', type: 'success' });
+      } catch (error) {
+        console.error('Search error:', error);
+        commit('addToast', { message: `Search error: ${error.message}`, type: 'danger' });
       }
     },
     async fetchPageDetails({ commit }, pageId) {

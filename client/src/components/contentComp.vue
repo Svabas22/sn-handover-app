@@ -513,7 +513,7 @@ export default {
     ...mapState(['currentPage', 'pages']),
   },
   methods: {
-    ...mapActions(['fetchPageDetails', 'updatePageDetails', 'deletePage', 'addToast', 'fetchPages']),
+    ...mapActions(['fetchPageDetails', 'updatePageDetails', 'deletePage', 'addToast', 'fetchPages', 'setPages', 'setCurrentPage']),
     toggleEditMode() {
       if (this.editMode) {  
         this.updatePageDetails(this.currentPage);
@@ -659,10 +659,17 @@ export default {
       console.log('Page updated:', data); // Add logging for client-side updates
       const index = this.pages.findIndex(page => page.id === data.id);
       if (index !== -1) {
-        this.$set(this.pages, index, data);
+        // Directly update the Vuex state
+        this.pages[index] = data;
+        this.setPages(this.pages); // Update the pages in Vuex store
+
         if (this.currentPage && this.currentPage.id === data.id) {
-          this.currentPage = data;
+          this.setCurrentPage(data); // Update the current page in Vuex store
         }
+      } else {
+        // If the page is not in the current list, add it (optional)
+        this.pages.push(data);
+        this.setPages(this.pages);
       }
     }
   },
