@@ -46,7 +46,6 @@ const store = createStore({
     },
   },
   actions: {
-
     async fetchPages({ commit, dispatch }) {
       try {
         const response = await fetch('/api/records');
@@ -79,25 +78,25 @@ const store = createStore({
     },
     async fetchPageDetails({ commit }, pageId) {
       try {
-          const response = await fetch(`/api/records/${pageId}`);
-          if (!response.ok) {
-              throw new Error(`HTTP status: ${response.status}`);
-          }
-          const text = await response.text();
-          console.log("Received response text:", response);
-          try {
-              const data = JSON.parse(text);
-              console.log("Received response:", data);
-              commit('setCurrentPage', data);
-          } catch (parseError) {
-              console.error('Error parsing JSON:', parseError);
-              commit('addToast', { message: `JSON parse error: ${parseError.message}`, type: 'danger' });
-          }
+        const response = await fetch(`/api/records/${pageId}`);
+        if (!response.ok) {
+          throw new Error(`HTTP status: ${response.status}`);
+        }
+        const text = await response.text();
+        console.log("Received response text:", response);
+        try {
+          const data = JSON.parse(text);
+          console.log("Received response:", data);
+          commit('setCurrentPage', data);
+        } catch (parseError) {
+          console.error('Error parsing JSON:', parseError);
+          commit('addToast', { message: `JSON parse error: ${parseError.message}`, type: 'danger' });
+        }
       } catch (networkError) {
-          console.error('Network or response error:', networkError);
-          commit('addToast', { message: `Network error: ${networkError.message}`, type: 'danger' });
+        console.error('Network or response error:', networkError);
+        commit('addToast', { message: `Network error: ${networkError.message}`, type: 'danger' });
       }
-  },
+    },
     async updatePageDetails({ commit }, page) {
       try {
         const response = await fetch(`/api/records/${page.id}`, {
@@ -169,10 +168,16 @@ socket.on('pageCreated', (data) => {
 
 socket.on('pageUpdated', (data) => {
   store.commit('updatePage', data);
+  if (store.state.currentPage && store.state.currentPage.id === data.id) {
+    store.commit('setCurrentPage', data);
+  }
 });
 
 socket.on('pageDeleted', (data) => {
-  store.commit('removePage', data.id);
+  store.commit('deletePage', data.id);
+  if (store.state.currentPage && store.state.currentPage.id === data.id) {
+    store.commit('setCurrentPage', null);
+  }
 });
 
 export default store;
