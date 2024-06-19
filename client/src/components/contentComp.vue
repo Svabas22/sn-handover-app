@@ -263,17 +263,26 @@
       <!-- Display engineers on shift -->
       <div>
         <h6>Engineers on Shift</h6>
-        <ul>
-          <li v-for="engineer in currentPage.engineersOnShift" :key="engineer.id">
-            {{ engineer.name }}
-          </li>
-        </ul>
+        <div v-if="!editMode">
+          <ul>
+            <li v-for="engineer in currentPage.engineersOnShift" :key="engineer.id">
+              {{ engineer.name }}
+            </li>
+          </ul>
+        </div>
+        <div v-else>
+          <select v-model="selectedShiftId" @change="updateEngineersOnShift">
+            <option v-for="shift in shifts" :key="shift.id" :value="shift.id">
+              {{ shift.title }}
+            </option>
+          </select>
+        </div>
       </div>
       <!-- Display client data -->
       <div v-for="(client, clientName) in currentPage.clients" :key="clientName">
-        <h6>{{ clientName }}</h6>
+        <h5>{{ clientName }}</h5>
         <div v-if="client.incidents.length > 0">
-          <h7>Incidents</h7>
+          <h6>Incidents</h6>
           <table class="table table-fixed">
             <thead>
               <tr>
@@ -326,7 +335,7 @@
           </table>
         </div>
         <div v-if="client.problems.length > 0">
-          <h7>Problems</h7>
+          <h6>Problems</h6>
           <table class="table table-fixed">
             <thead>
               <tr>
@@ -380,7 +389,7 @@
         </div>
 
         <div v-if="client.changes.length > 0">
-          <h7>Changes</h7>
+          <h6>Changes</h6>
           <table class="table table-fixed">
             <thead>
               <tr>
@@ -432,7 +441,7 @@
         </div>
 
         <div v-if="client.serviceRequests.length > 0">
-          <h7>Service Requests</h7>
+          <h6>Service Requests</h6>
           <table class="table table-fixed">
             <thead>
               <tr>
@@ -468,6 +477,7 @@
 </template>
 
 <script>
+
 import { mapState, mapActions } from 'vuex';
 //import axios from 'axios';
 
@@ -510,16 +520,25 @@ export default {
     };
   },
   computed: {
-    ...mapState(['currentPage', 'pages']),
+    ...mapState(['currentPage', 'pages', 'shifts', 'currentShift']),
   },
   methods: {
-    ...mapActions(['fetchPageDetails', 'updatePageDetails', 'deletePage', 'addToast', 'fetchPages', 'setPages', 'setCurrentPage']),
+    ...mapActions(['fetchPageDetails', 'updatePageDetails', 'deletePage', 'addToast', 'fetchPages', 'setPages', 'setCurrentPage', 'fetchShifts', 'fetchShiftDetails']),
     toggleEditMode() {
       if (this.editMode) {  
         this.updatePageDetails(this.currentPage);
         this.$socket.emit('editPage', this.currentPage);
       }
       this.editMode = !this.editMode;
+    },
+    //--Shift addition--
+    async updateEngineersOnShift() {
+      if (this.selectedShiftId) {
+        const selectedShift = this.shifts.find(shift => shift.id === this.selectedShiftId);
+        if (selectedShift) {
+          this.currentPage.engineersOnShift = selectedShift.engineers;
+        }
+      }
     },
     //--INC addition--
     async saveIncident() {
@@ -657,7 +676,7 @@ export default {
     },
     handlePageUpdated(data) {
       console.log('Page updated:', data); // Add logging for client-side updates
-      this.updatePage(data); // Commit the mutation to update the Vuex store
+      this.updatePageDetails(data); // Commit the mutation to update the Vuex store
 
       if (this.currentPage && this.currentPage.id === data.id) {
         this.setCurrentPage(data); // Update the current page in Vuex store
@@ -666,6 +685,7 @@ export default {
   },
   created() {
     const docId = this.$route.params.id;
+    this.fetchShifts();
     if (docId) {
     this.fetchPageDetails(docId);
   } 

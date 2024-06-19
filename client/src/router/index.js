@@ -1,14 +1,12 @@
 import { createRouter, createWebHistory } from 'vue-router';
 import Login from '../components/loginComp.vue';
-//import formTest from '@/components/formTest';
-//import TestingCards from '@/components/testingCards';
+//import Shifts from '../components/shiftsComp.vue';
 import Home from '../components/homeComp.vue';
 const router = createRouter({
   history: createWebHistory(process.env.BASE_URL),
   routes: [
     { path: '/login', name: 'Login', component: Login },
     { path: '/', name: 'Home', component: Home, meta: { requiresAuth: true } }
-    //{ path: '/', name: 'Home', component: Home }
   ]
 });
 

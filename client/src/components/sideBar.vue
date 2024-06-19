@@ -48,16 +48,18 @@ export default {
       this.fetchPageDetails(pageId);
     },
     createNewHandoverWithData() {
-      this.copyHandover().then(() => {
+      this.copyHandover().then((newPage) => {
         this.addToast({ message: 'New handover created successfully.', type: 'success' });
+        this.setCurrentPage(newPage);
       }).catch((error) => {
         this.addToast({ message: `Error: ${error.message}`, type: 'danger' });
       });
     },
     createNewTemplateHandover() {
       this.createHandoverTemplate()
-      .then(() => {
+      .then((newPage) => {
         this.addToast({ message: 'New template created successfully.', type: 'success' });
+        this.setCurrentPage(newPage);
       })
       .catch(error => {
         this.addToast({ message: `Failed to create template ${error.message}`, type: 'danger' });
@@ -66,6 +68,14 @@ export default {
   },
   created() {
     this.fetchPages();
+
+    this.$socket.on('pageCreated', (newPage) => {
+      this.$store.commit('addPage', newPage);
+      this.setCurrentPage(newPage);
+    });
+  },
+  beforeUnmount() {
+    this.$socket.off('pageCreated');
   }
 }
 </script>

@@ -70,6 +70,7 @@ const endpoint = process.env.COSMOS_DB_ENDPOINT;
 const key = process.env.COSMOS_DB_KEY;
 const databaseId = "handoversys";
 const containerId = "snRecords";
+const shiftsContainerId = "snShifts";
 const client = new CosmosClient({ endpoint, key });
 let container;
 
@@ -77,6 +78,7 @@ async function initializeCosmosDB() {
   try {
     const database = (await client.databases.createIfNotExists({ id: databaseId })).database;
     container = (await database.containers.createIfNotExists({ id: containerId })).container;
+    shiftsContainer = (await database.containers.createIfNotExists({ id: shiftsContainerId })).container;
   } catch (error) {
     console.error('Error initializing Cosmos DB:', error);
   }
@@ -169,18 +171,22 @@ app.post('/api/copy-handover', async (req, res) => {
       let newDocument = { ...latestDocument };
       delete newDocument.id;
 
+      Object.keys(newDocument.clients).forEach(client => {
+        newDocument.clients[client].incidents = newDocument.clients[client].incidents.filter(incident => incident.status !== 'Resolved');
+      });
+
       let today = new Date();
       newDocument.date = today.toISOString().split('T')[0];
       newDocument.title = `Handover ${newDocument.date} - ${today.getHours() >= 3 && today.getHours() < 15 ? 'Day' : 'Night'}`;
 
       const { resource: createdItem } = await container.items.create(newDocument);
-      res.status(201).send(`New document created with id: ${createdItem.id}`);
+      res.status(200).json(createdItem);
       io.emit('pageCreated', createdItem);
     } else {
       res.status(404).send('No existing documents found to clone.');
     }
   } catch (error) {
-    res.status(500).send(`An error occurred: ${error.message}`);
+    res.status(500).json({ error: error.message });
   }
 });
 
@@ -199,13 +205,13 @@ app.post('/api/copy-template', async (req, res) => {
       newDocument.title = `Handover ${newDocument.date} - ${today.getHours() >= 3 && today.getHours() < 15 ? 'Day' : 'Night'}`;
 
       const { resource: createdItem } = await container.items.create(newDocument);
-      res.status(201).send(`New document created with id: ${createdItem.id}`);
+      res.status(200).json(createdItem);
       io.emit('pageCreated', createdItem);
     } else {
       res.status(404).send('No existing documents found to clone.');
     }
   } catch (error) {
-    res.status(500).send(`An error occurred: ${error.message}`);
+    res.status(500).json({ error: error.message });
   }
 });
 
@@ -262,6 +268,70 @@ app.delete('/api/records/:id', async (req, res) => {
   }
 });
 
+
+// Shift management
+app.get('/api/shifts', async (req, res) => {
+  try {
+    if (!shiftsContainer) {
+      throw new Error('Cosmos DB container is not initialized');
+    }
+    const querySpec = {
+      query: "SELECT * FROM c ORDER BY c._ts DESC"
+    };
+    const { resources: items } = await shiftsContainer.items.query(querySpec).fetchAll();
+    res.status(200).json(items);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+app.get('/api/shifts/:id', async (req, res) => {
+  const shiftId = req.params.id;
+  try {
+    if (!shiftsContainer) {
+      throw new Error('Cosmos DB container is not initialized');
+    }
+    const querySpec = {
+      query: "SELECT * FROM c WHERE c.id = @shiftId",
+      parameters: [
+        { name: "@shiftId", value: shiftId }
+      ]
+    };
+    const { resources: items } = await shiftsContainer.items.query(querySpec).fetchAll();
+    res.status(200).json(items[0]);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+app.post('/api/shifts', async (req, res) => {
+  const { id, date, engineersOnShift } = req.body;
+  try {
+    if (!shiftsContainer) {
+      throw new Error('Cosmos DB container is not initialized');
+    }
+    const newShift = { id, date, engineersOnShift };
+    const { resource: createdItem } = await shiftsContainer.items.create(newShift);
+    res.status(201).json(createdItem);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+app.put('/api/shifts/:id', async (req, res) => {
+  const shiftId = req.params.id;
+  const updatedShift = req.body;
+  try {
+    if (!shiftsContainer) {
+      throw new Error('Shifts container is not initialized');
+    }
+    const partitionKey = updatedShift.id;
+    const { resource: doc } = await shiftsContainer.item(shiftId, partitionKey).replace(updatedShift);
+    res.status(200).json(doc);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
 
 
 const PORT = process.env.PORT || 3000;

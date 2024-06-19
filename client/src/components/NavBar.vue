@@ -19,7 +19,7 @@
             <a class="nav-link active" aria-current="page" href="#">Templates</a>
           </li>
           <li class="nav-item">
-            <a class="nav-link" href="#">Shifts</a>
+            <a class="nav-link" href="/shifts">Shifts</a>
           </li>
         </ul>
         <form class="d-flex" role="search" @submit.prevent="performSearch">
