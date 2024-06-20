@@ -173,6 +173,8 @@ app.post('/api/copy-handover', async (req, res) => {
 
       Object.keys(newDocument.clients).forEach(client => {
         newDocument.clients[client].incidents = newDocument.clients[client].incidents.filter(incident => incident.status !== 'Resolved');
+        newDocument.clients[client].problems = newDocument.clients[client].problems.filter(problem => problem.status !== 'Resolved');
+        newDocument.clients[client].changes = newDocument.clients[client].changes.filter(change => change.status !== 'Closed');
       });
 
       let today = new Date();

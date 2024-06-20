@@ -14,7 +14,7 @@
         </li>
       </ul>
     </div>
-    <div class="dropup">
+    <div :class="{'dropup': true, 'disabled': !isEngineer}">
       <button class="btn btn-secondary dropdown-toggle w-100" type="button" id="dropupMenuButton" data-bs-toggle="dropdown" aria-expanded="false">
         New Page
       </button>
@@ -40,6 +40,9 @@ export default {
     ...mapState(['pages', 'currentPage']),
     filteredPages() {
       return this.pages.filter(page => page.title.toLowerCase().includes(this.searchQuery.toLowerCase()));
+    },
+    isEngineer() {
+      return this.userProfile.role === 'Engineer';
     }
   },
   methods: {
@@ -119,6 +122,12 @@ export default {
   background-color: white;
   padding: 0.75rem;
 }
+
+.dropup.disabled {
+  pointer-events: none;
+  opacity: 0.5;
+}
+
 .toast-container {
   position: fixed;
   bottom: 0;

@@ -67,6 +67,7 @@ const store = createStore({
   actions: {
     async fetchPages({ commit, dispatch }) {
       try {
+        console.log(localStorage.getItem('user'));
         const response = await fetch('/api/records');
         if (!response.ok) {
           throw new Error('Network response was not ok');

@@ -3,7 +3,7 @@
     <div v-if="currentPage" class="main-container">
       <div class="header">
         <h1>{{ currentPage.title }}</h1>
-        <div class="dropwdowns-opt">
+        <div :class="{'dropwdowns-opt': true, 'disabled': !isEngineer}">
           <div class="dropdown-add">
             <button class="btn btn-link text-decoration-none" id="dropdownMenuButton" data-bs-toggle="dropdown" aria-expanded="false">
               <i class="bi bi-plus-lg"></i>
@@ -218,6 +218,16 @@
                   <input type="text" class="form-control" id="ritmNumber" v-model="newRequest.ritmNumber" required>
                 </div>
                 <div class="mb-3">
+                  <label for="status" class="form-label">Status</label>
+                  <select class="form-select" id="status" v-model="newChange.status" required>
+                    <option value="Draft">Draft</option>
+                    <option value="Awaiting Approval">Awaiting Approval</option>
+                    <option value="Pending">Pending</option>
+                    <option value="Work in Progress">Work in Progress</option>
+                    <option value="Closed">Closed</option>
+                  </select>
+                </div>
+                <div class="mb-3">
                   <label for="notes" class="form-label">Short request description</label>
                   <textarea class="form-control" id="notes" v-model="newRequest.desc" rows="3"></textarea>
                 </div>
@@ -262,7 +272,7 @@
       </div>
       <!-- Display engineers on shift -->
       <div>
-        <h6>Engineers on Shift</h6>
+        <h5>Engineers on Shift</h5>
         <div v-if="!editMode">
           <ul>
             <li v-for="engineer in currentPage.engineersOnShift" :key="engineer.id">
@@ -446,6 +456,7 @@
             <thead>
               <tr>
                 <th>Request Number</th>
+                <th>Status</th>
                 <th>Short request description</th>
                 <th>Notes</th>
               </tr>
@@ -453,6 +464,18 @@
             <tbody>
               <tr v-for="request in client.serviceRequests" :key="request.ritmNumber">
                 <td>{{ request.ritmNumber }}</td>
+                <td>
+                  <div v-if="!editMode">{{ request.status }}</div>
+                  <div v-else>
+                    <select v-model="request.status">
+                      <option value="Draft">Draft</option>
+                      <option value="Awaiting Approval">Awaiting Approval</option>
+                      <option value="Pending">Pending</option>
+                      <option value="Work in Progress">Work in Progress</option>
+                      <option value="Closed">Closed</option>
+                    </select>
+                  </div>
+                </td>
                 <td>
                   <div v-if="!editMode">{{ request.desc }}</div>
                   <div v-else>
@@ -486,6 +509,7 @@ export default {
   data() {
     return {
       editMode: false,
+      userProfile: { role: localStorage.getItem('roles') },
       newIncident: {
         client: '',
         incNumber: '',
@@ -514,17 +538,23 @@ export default {
       newRequest: {
         client: '',
         ritmNumber: '',
+        status: 'Draft',
         desc: '',
         notes: ''
       }
     };
   },
   computed: {
-    ...mapState(['currentPage', 'pages', 'shifts', 'currentShift']),
+    ...mapState(['currentPage', 'pages', 'shifts', 'currentShift', 'toasts']),
+    isEngineer() {
+      return this.userProfile.role === 'Engineer';
+    }
   },
   methods: {
     ...mapActions(['fetchPageDetails', 'updatePageDetails', 'deletePage', 'addToast', 'fetchPages', 'setPages', 'setCurrentPage', 'fetchShifts', 'fetchShiftDetails']),
+
     toggleEditMode() {
+
       if (this.editMode) {  
         this.updatePageDetails(this.currentPage);
         this.$socket.emit('editPage', this.currentPage);
@@ -641,6 +671,7 @@ export default {
       client.serviceRequests.push({
         ritmNumber: this.newRequest.ritmNumber,
         status: this.newRequest.status,
+        desc: this.newRequest.desc,
         notes: this.newRequest.notes
       });
 
@@ -658,7 +689,8 @@ export default {
       this.newRequest = {
         client: '',
         ritmNumber: '',
-        status: 'Active',
+        status: 'Draft',
+        desc: '',
         notes: ''
       };
     },
@@ -667,6 +699,7 @@ export default {
         try {
           await this.deletePage(this.currentPage.id);
           this.$socket.emit('deletePage', { id: this.currentPage.id }); // Emit event to notify others
+          
           this.$router.push({ name: 'HomePage' }); // Redirect or handle the navigation
         } catch (error) {
           console.error('Failed to delete the page:', error);
@@ -731,6 +764,11 @@ export default {
   display: flex;
   color: rgb(0, 0, 0);
   gap: 10px;  /* Maintain spacing between buttons */
+}
+
+.dropwdowns-opt.disabled {
+  pointer-events: none;
+  opacity: 0.5;
 }
 
 .table-fixed {

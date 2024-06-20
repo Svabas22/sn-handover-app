@@ -137,7 +137,8 @@ class AuthProvider {
                 req.session.user = {
                     username: tokenResponse.account.username,
                     name: tokenResponse.account.name,
-                    email: tokenResponse.account.username
+                    email: tokenResponse.account.username,
+                    roles: tokenResponse.account.idTokenClaims.roles
                 };
 
                 const state = JSON.parse(this.cryptoProvider.base64Decode(req.body.state));

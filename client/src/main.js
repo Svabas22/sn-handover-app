@@ -35,6 +35,7 @@ axios.get('/auth/status')
     if (response.data.authenticated) {
       localStorage.setItem('userAuthenticated', 'true');  // Set authenticated status
       localStorage.setItem('user', response.data.user.name);  // Set user info
+      localStorage.setItem('roles', response.data.user.roles);
       app.mount('#app');  // Mount the app if authenticated
     } else {
       localStorage.removeItem('userAuthenticated');  // Clear authentication status

@@ -12,11 +12,6 @@ router.get('/signin', authProvider.login({
     successRedirect: '/'
 }));
 
-// router.get('/acquireToken', authProvider.acquireToken({
-//     scopes: ['User.Read'],
-//     redirectUri: REDIRECT_URI,
-//     successRedirect: '/'
-// }));
 router.post('/redirect', authProvider.handleRedirect());
 
 router.get('/signout', authProvider.logout({
