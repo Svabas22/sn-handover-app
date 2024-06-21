@@ -59,7 +59,7 @@
                 </div>
                 <div class="mb-3">
                   <label for="dateOpened" class="form-label">Date Opened</label>
-                  <input type="datetime-local" class="form-control" id="dateOpened" v-model="newIncident.dateOpened" required>
+                  <input type="datetime-local" class="form-control" id="dateOpened" v-model="newIncident.dateOpened" :max="maxDate" required>
                 </div>
                 <div class="mb-3">
                   <label for="priority" class="form-label">Priority</label>
@@ -299,17 +299,18 @@
                 <th>Incident Number</th>
                 <th>Status</th>
                 <th>Priority</th>
+                <th>Date Opened</th>
                 <th>Main Problem</th>
                 <th>Notes</th>
               </tr>
             </thead>
             <tbody>
-              <tr v-for="incident in client.incidents" :key="incident.incNumber">
+              <tr v-for="incident in client.incidents" :key="incident.incNumber" required>
                 <td>{{ incident.incNumber }}</td>
                 <td>
                   <div v-if="!editMode">{{ incident.status }}</div>
                   <div v-else>
-                    <select v-model="incident.status">
+                    <select v-model="incident.status" required>
                       <option value="Active">Active</option>
                       <option value="Awaiting user info">Awaiting User Info</option>
                       <option value="Awaiting third party">Awaiting Third Party</option>
@@ -320,7 +321,7 @@
                 <td>
                   <div v-if="!editMode">{{ incident.priority }}</div>
                   <div v-else>
-                    <select v-model="incident.priority">
+                    <select v-model="incident.priority" required>
                       <option value="P4 - Low">P4 - Low</option>
                       <option value="P3 - moderate">P3 - moderate</option>
                       <option value="P2 - high">P2 - high</option>
@@ -329,9 +330,15 @@
                   </div>
                 </td>
                 <td>
+                  <div v-if="!editMode">{{ incident.dateOpened }}</div>
+                  <div v-else>
+                    <input type="datetime-local" class="form-control" id="dateOpened" v-model="incident.dateOpened" :max="maxDate" required>
+                  </div>
+                </td>
+                <td>
                   <div v-if="!editMode">{{ incident.mainProblem }}</div>
                   <div v-else>
-                    <textarea type="text" v-model="incident.mainProblem" class="form-control custom-textarea"></textarea>
+                    <textarea type="text" v-model="incident.mainProblem" class="form-control custom-textarea" required></textarea>
                   </div>
                 </td>
                 <td>
@@ -357,12 +364,12 @@
               </tr>
             </thead>
             <tbody>
-              <tr v-for="problem in client.problems" :key="problem.prbNumber">
+              <tr v-for="problem in client.problems" :key="problem.prbNumber" required>
                 <td>{{ problem.prbNumber }}</td>
                 <td>
                   <div v-if="!editMode">{{ problem.status }}</div>
                   <div v-else>
-                    <select v-model="problem.status">
+                    <select v-model="problem.status" required>
                       <option value="Active">Active</option>
                       <option value="Awaiting user info">Awaiting User Info</option>
                       <option value="Awaiting third party">Awaiting Third Party</option>
@@ -373,7 +380,7 @@
                 <td>
                   <div v-if="!editMode">{{ problem.priority }}</div>
                   <div v-else>
-                    <select v-model="problem.priority">
+                    <select v-model="problem.priority" required>
                       <option value="P4 - Low">P4 - Low</option>
                       <option value="P3 - moderate">P3 - moderate</option>
                       <option value="P2 - high">P2 - high</option>
@@ -384,7 +391,7 @@
                 <td>
                   <div v-if="!editMode">{{ problem.rca }}</div>
                   <div v-else>
-                    <textarea type="text" v-model="problem.rca" class="form-control custom-textarea"></textarea>
+                    <textarea type="text" v-model="problem.rca" class="form-control custom-textarea" required></textarea>
                   </div>
                 </td>
                 <td>
@@ -411,12 +418,12 @@
               </tr>
             </thead>
             <tbody>
-              <tr v-for="change in client.changes" :key="change.chgNumber">
+              <tr v-for="change in client.changes" :key="change.chgNumber" required>
                 <td>{{ change.chgNumber }}</td>
                 <td>
                   <div v-if="!editMode">{{ change.status }}</div>
                   <div v-else>
-                    <select v-model="change.status">
+                    <select v-model="change.status" required>
                       <option value="New">New</option>
                       <option value="Assess">Assess</option>
                       <option value="Authorize">Authorize</option>
@@ -430,13 +437,13 @@
                 <td>
                   <div v-if="!editMode">{{ change.startDate }}</div>
                   <div v-else>
-                    <input type="datetime-local" class="form-control" id="startDate" v-model="change.startDate"/>
+                    <input type="datetime-local" class="form-control" id="startDate" v-model="change.startDate" required/>
                   </div>
                 </td>
                 <td>
                   <div v-if="!editMode">{{ change.endDate }}</div>
                   <div v-else>
-                    <input type="datetime-local" class="form-control" id="endDate" v-model="change.endDate"/>
+                    <input type="datetime-local" class="form-control" id="endDate" v-model="change.endDate" required/>
                   </div>
                 </td>
                 <td>
@@ -462,12 +469,12 @@
               </tr>
             </thead>
             <tbody>
-              <tr v-for="request in client.serviceRequests" :key="request.ritmNumber">
+              <tr v-for="request in client.serviceRequests" :key="request.ritmNumber" required>
                 <td>{{ request.ritmNumber }}</td>
                 <td>
                   <div v-if="!editMode">{{ request.status }}</div>
                   <div v-else>
-                    <select v-model="request.status">
+                    <select v-model="request.status" required>
                       <option value="Draft">Draft</option>
                       <option value="Awaiting Approval">Awaiting Approval</option>
                       <option value="Pending">Pending</option>
@@ -479,7 +486,7 @@
                 <td>
                   <div v-if="!editMode">{{ request.desc }}</div>
                   <div v-else>
-                    <textarea type="text" v-model="request.desc" class="form-control custom-textarea"></textarea>
+                    <textarea type="text" v-model="request.desc" class="form-control custom-textarea" required></textarea>
                   </div>
                 </td>
                 <td>
@@ -548,6 +555,15 @@ export default {
     ...mapState(['currentPage', 'pages', 'shifts', 'currentShift', 'toasts']),
     isEngineer() {
       return this.userProfile.role === 'Engineer';
+    },
+    maxDate() {
+      const today = new Date();
+      const year = today.getFullYear();
+      const month = String(today.getMonth() + 1).padStart(2, '0');
+      const day = String(today.getDate()).padStart(2, '0');
+      const hours = String(today.getHours()).padStart(2, '0');
+      const minutes = String(today.getMinutes()).padStart(2, '0');
+      return `${year}-${month}-${day}T${hours}:${minutes}`;
     }
   },
   methods: {

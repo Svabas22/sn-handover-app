@@ -19,6 +19,7 @@ const indexRouter = require('./routes/index');
 const usersRouter = require('./routes/users');
 const authRouter = require('./routes/auth');
 const handoverTemplate = require('./template-page.json');
+const isAuthenticated = require('./auth/isAuthenticated');
 
 const app = express();
 const server = http.createServer(app);
@@ -28,6 +29,11 @@ const io = socketIo(server, {
     methods: ["GET", "POST"]
   }
 });
+
+// const corsOptions = {
+//   origin: 'http://localhost:3000', // Replace with your frontend origin
+//   optionsSuccessStatus: 200
+// };
 
 app.use(cors());
 app.use(express.json());
@@ -334,6 +340,27 @@ app.put('/api/shifts/:id', async (req, res) => {
     res.status(500).json({ error: error.message });
   }
 });
+
+
+app.get('/api/latest-page', async (req, res) => {
+  try {
+    if (!container) {
+      throw new Error('Cosmos DB container is not initialized');
+    }
+    const querySpec = {
+      query: "SELECT * FROM c ORDER BY c._ts DESC OFFSET 0 LIMIT 1"
+    };
+    const { resources: items } = await container.items.query(querySpec).fetchAll();
+    if (items.length > 0) {
+      res.status(200).json(items[0]);
+    } else {
+      res.status(404).send('No pages found.');
+    }
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
 
 
 const PORT = process.env.PORT || 3000;

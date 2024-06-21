@@ -31,9 +31,11 @@ import { mapActions, mapState } from 'vuex';
 
 export default {
   name: 'SidebarComponent',
+  
   data() {
     return {
       searchQuery: '',
+      userProfile: { role: localStorage.getItem('roles') },
     };
   },
   computed: {
@@ -49,6 +51,7 @@ export default {
     ...mapActions(['fetchPages', 'fetchPageDetails', 'createHandoverTemplate', 'copyHandover', 'addToast']),
     loadPage(pageId) {
       this.fetchPageDetails(pageId);
+      console.log(this.userProfile.role);
     },
     createNewHandoverWithData() {
       this.copyHandover().then((newPage) => {

@@ -14,6 +14,7 @@ const store = createStore({
     toastId: 0,
     searchResults: [],
     currentShift: null,
+    incidents: [],
   },
   mutations: {
     setPages(state, pages) {
@@ -63,9 +64,14 @@ const store = createStore({
     setSearchResults(state, results) {
       state.searchResults = results;
     },
+    setIncidents(state, incidents) { 
+      state.incidents = incidents;
+    },
   },
   actions: {
     async fetchPages({ commit, dispatch }) {
+      const token = localStorage.getItem('accessToken');
+      console.log("Token:", token); 
       try {
         console.log(localStorage.getItem('user'));
         const response = await fetch('/api/records');
@@ -115,6 +121,19 @@ const store = createStore({
       } catch (networkError) {
         console.error('Network or response error:', networkError);
         commit('addToast', { message: `Network error: ${networkError.message}`, type: 'danger' });
+      }
+    },
+    async fetchLatestPage({ commit }) {
+      try {
+        const response = await fetch('/api/latest-page');
+        if (!response.ok) {
+          throw new Error('Network response was not ok');
+        }
+        const data = await response.json();
+        return data;
+      } catch (error) {
+        console.error('Error fetching latest page:', error);
+        commit('addToast', { message: `Fetch latest page error: ${error.message}`, type: 'danger' });
       }
     },
     async updatePageDetails({ commit }, page) {

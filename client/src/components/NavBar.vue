@@ -16,7 +16,7 @@
       <div class="collapse navbar-collapse" id="navbarSupportedContent">
         <ul class="navbar-nav me-auto mb-2 mb-lg-0">
           <li class="nav-item">
-            <a class="nav-link active" aria-current="page" href="#">SLA Progress</a>
+            <a class="nav-link active" aria-current="page" href="#" @click="openSlaModal">SLA Progress</a>
           </li>
         </ul>
         <form class="d-flex" role="search" @submit.prevent="performSearch">
@@ -40,16 +40,21 @@
           </li>
         </ul>
       </div>
+      <SLAProgressModal ref="slaModal"/>
     </div>
   </nav>
 </template>
 
 <script>
 import 'bootstrap/dist/js/bootstrap.bundle.js';
+import SLAProgressModal from './SLAComp.vue';
 import { debounce } from 'lodash';
 import { mapActions, mapState } from 'vuex';
 export default {
   name: 'NavBarComponent',
+  components: {
+    SLAProgressModal,
+  },
   data() {
     return {
       userProfile: { displayName: localStorage.getItem('user') },
@@ -64,6 +69,9 @@ export default {
     debounceSearch: debounce(function () {
       this.performSearch(this.searchQuery);
     }, 300),
+    openSlaModal() {
+      this.$refs.slaModal.openSlaModal();
+    }
   },
 };
 </script>
