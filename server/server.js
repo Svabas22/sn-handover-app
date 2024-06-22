@@ -30,11 +30,6 @@ const io = socketIo(server, {
   }
 });
 
-// const corsOptions = {
-//   origin: 'http://localhost:3000', // Replace with your frontend origin
-//   optionsSuccessStatus: 200
-// };
-
 app.use(cors());
 app.use(express.json());
 app.use(cookieParser());

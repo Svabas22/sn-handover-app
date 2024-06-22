@@ -1,10 +1,11 @@
 import { createStore } from 'vuex';
 import io from 'socket.io-client';
-import { debounce } from 'lodash';
+//import { debounce } from 'lodash';
 
 // Ensure that the SOCKET_URI is correctly configured in your environment variables
-//const socket = io('http://localhost:3000');
+// const socket = io('http://localhost:3000');
 const socket = io('https://sn-handover-app.azurewebsites.net');
+
 const store = createStore({
   state: {
     pages: [],
@@ -137,7 +138,7 @@ const store = createStore({
         commit('addToast', { message: `Fetch latest page error: ${error.message}`, type: 'danger' });
       }
     },
-    debouncedUpdatePageDetails: debounce(async function ({ commit }, page) {
+    async updatePageDetails({ commit }, page) {
       try {
         const response = await fetch(`/api/records/${page.id}`, {
           method: 'PUT',
@@ -156,7 +157,7 @@ const store = createStore({
         console.error('Error updating page details:', error);
         commit('addToast', { message: `Update page error: ${error.message}`, type: 'danger' });
       }
-    }, 2000),
+    },
     async copyHandover({ commit }) {
       try {
         const response = await fetch('/api/copy-handover', { method: 'POST' });
@@ -198,78 +199,79 @@ const store = createStore({
         commit('addToast', { message: `Delete page error: ${error.message}`, type: 'danger' });
       }
     },
-  //shift management
-    
-  async fetchShifts({ commit }) {
-    try {
-      const response = await fetch('/api/shifts');
-      if (!response.ok) {
-        throw new Error('Network response was not ok');
+    // Shift management
+    async fetchShifts({ commit }) {
+      try {
+        const response = await fetch('/api/shifts');
+        if (!response.ok) {
+          throw new Error('Network response was not ok');
+        }
+        const data = await response.json();
+        commit('setShifts', data);
+      } catch (error) {
+        console.error('Error fetching shifts:', error);
+        commit('addToast', { message: `Fetch shifts error: ${error.message}`, type: 'danger' });
       }
-      const data = await response.json();
-      commit('setShifts', data);
-    } catch (error) {
-      console.error('Error fetching shifts:', error);
-      commit('addToast', { message: `Fetch shifts error: ${error.message}`, type: 'danger' });
-    }
-  },
-  async fetchShiftDetails({ commit }, shiftId) {
-    try {
-      const response = await fetch(`/api/shifts/${shiftId}`);
-      if (!response.ok) {
-        throw new Error(`HTTP status: ${response.status}`);
+    },
+    async fetchShiftDetails({ commit }, shiftId) {
+      try {
+        const response = await fetch(`/api/shifts/${shiftId}`);
+        if (!response.ok) {
+          throw new Error(`HTTP status: ${response.status}`);
+        }
+        const data = await response.json();
+        commit('setCurrentShift', data);
+      } catch (error) {
+        console.error('Error fetching shift details:', error);
+        commit('addToast', { message: `Fetch shift details error: ${error.message}`, type: 'danger' });
       }
-      const data = await response.json();
-      commit('setCurrentShift', data);
-    } catch (error) {
-      console.error('Error fetching shift details:', error);
-      commit('addToast', { message: `Fetch shift details error: ${error.message}`, type: 'danger' });
-    }
-  },
-  async createShift({ commit }, shift) {
-    try {
-      const response = await fetch('/api/shifts', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(shift)
-      });
-      if (!response.ok) {
-        throw new Error('Network response was not ok');
+    },
+    async createShift({ commit }, shift) {
+      try {
+        const response = await fetch('/api/shifts', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify(shift)
+        });
+        if (!response.ok) {
+          throw new Error('Network response was not ok');
+        }
+        const data = await response.json();
+        commit('addShift', data);
+        commit('setCurrentShift', data);
+        commit('addToast', { message: 'Shift created successfully.', type: 'success' });
+      } catch (error) {
+        console.error('Error creating shift:', error);
+        commit('addToast', { message: `Create shift error: ${error.message}`, type: 'danger' });
       }
-      const data = await response.json();
-      commit('addShift', data);
-      commit('setCurrentShift', data);
-      commit('addToast', { message: 'Shift created successfully.', type: 'success' });
-    } catch (error) {
-      console.error('Error creating shift:', error);
-      commit('addToast', { message: `Create shift error: ${error.message}`, type: 'danger' });
-    }
-  },
-  async updateShiftDetails({ commit }, shift) {
-    try {
-      const response = await fetch(`/api/shifts/${shift.id}`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(shift)
-      });
-      if (!response.ok) {
-        throw new Error('Network response was not ok');
+    },
+    async updateShiftDetails({ commit }, shift) {
+      try {
+        const response = await fetch(`/api/shifts/${shift.id}`, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify(shift)
+        });
+        if (!response.ok) {
+          throw new Error('Network response was not ok');
+        }
+        const data = await response.json();
+        commit('setCurrentShift', data);
+        commit('updateShift', data);
+        commit('addToast', { message: 'Shift details updated successfully.', type: 'success' });
+      } catch (error) {
+        console.error('Error updating shift details:', error);
+        commit('addToast', { message: `Update shift error: ${error.message}`, type: 'danger' });
       }
-      const data = await response.json();
-      commit('setCurrentShift', data);
-      commit('updateShift', data);
-      commit('addToast', { message: 'Shift details updated successfully.', type: 'success' });
-    } catch (error) {
-      console.error('Error updating shift details:', error);
-      commit('addToast', { message: `Update shift error: ${error.message}`, type: 'danger' });
     }
-  }
   },
 });
+
+
 
 socket.on('pageCreated', (data) => {
   store.commit('addPage', data);
@@ -279,7 +281,7 @@ socket.on('pageUpdated', (data) => {
   store.commit('updatePage', data);
   if (store.state.currentPage && store.state.currentPage.id === data.id) {
     store.commit('setCurrentPage', data);
-    store.commit('addToast', { message: `Page ${store.state.currentPage.title} updated`, type: 'success' })
+    store.commit('addToast', { message: `Page ${store.state.currentPage.title} updated`, type: 'success' });
   }
 });
 
@@ -287,10 +289,8 @@ socket.on('pageDeleted', (data) => {
   store.commit('deletePage', data.id);
   if (store.state.currentPage && store.state.currentPage.id === data.id) {
     store.commit('setCurrentPage', null);
-    store.commit('addToast', { message: `Page ${store.state.currentPage.title} deleted`, type: 'danger' })
+    store.commit('addToast', { message: `Page ${store.state.currentPage.title} deleted`, type: 'danger' });
   }
 });
-
-// Debounce updatePageDetails and ensure it's properly integrated
 
 export default store;

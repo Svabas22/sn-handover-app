@@ -567,12 +567,12 @@ export default {
     }
   },
   methods: {
-    ...mapActions(['fetchPageDetails', 'debouncedUpdatePageDetails', 'deletePage', 'addToast', 'fetchPages', 'setPages', 'setCurrentPage', 'fetchShifts', 'fetchShiftDetails']),
+    ...mapActions(['fetchPageDetails', 'updatePageDetails', 'deletePage', 'addToast', 'fetchPages', 'setPages', 'setCurrentPage', 'fetchShifts', 'fetchShiftDetails']),
 
     toggleEditMode() {
 
       if (this.editMode) {  
-        this.debouncedUpdatePageDetails(this.currentPage);
+        this.updatePageDetails(this.currentPage);
         this.$socket.emit('editPage', this.currentPage);
       }
       this.editMode = !this.editMode;
@@ -599,7 +599,7 @@ export default {
       });
 
       try {
-        await this.debouncedUpdatePageDetails(this.currentPage);
+        await this.updatePageDetails(this.currentPage);
         this.$socket.emit('editPage', this.currentPage);
         this.resetNewIncident();
         this.$router.push({ name: 'HomePage' });
@@ -631,7 +631,7 @@ export default {
       });
 
       try {
-        await this.debouncedUpdatePageDetails(this.currentPage);
+        await this.updatePageDetails(this.currentPage);
         this.$socket.emit('editPage', this.currentPage);
         this.resetNewProblem();
         this.$router.push({ name: 'HomePage' });
@@ -662,10 +662,10 @@ export default {
       });
 
       try {
-        await this.debouncedUpdatePageDetails(this.currentPage);
+        await this.updatePageDetails(this.currentPage);
         this.$socket.emit('editPage', this.currentPage);
         this.resetNewChange();
-        this.closeModal('addChangeModal');
+        
       } catch (error) {
         console.error('Error saving change:', error);
         this.addToast({ message: 'Error saving change:', type: 'danger' });
@@ -675,7 +675,7 @@ export default {
       this.newChange = {
         client: '',
         chgNumber: '',
-        status: 'Active',
+        status: 'New',
         startDate: '',
         endDate: '',
         notes: ''
@@ -692,10 +692,10 @@ export default {
       });
 
       try {
-        await this.debouncedUpdatePageDetails(this.currentPage);
+        await this.updatePageDetails(this.currentPage);
         this.$socket.emit('editPage', this.currentPage);
         this.resetNewRequest();
-        this.closeModal('addRequestModal');
+        
       } catch (error) {
         console.error('Error saving service request:', error);
         this.addToast({ message: 'Error saving service request:', type: 'danger' });
@@ -724,11 +724,12 @@ export default {
       }
     },
     handlePageUpdated(data) {
-      console.log('Page updated:', data); // Add logging for client-side updates
-      this.debouncedUpdatePageDetails(data); // Commit the mutation to update the Vuex store
-
+      console.log('Page updated:', data);
       if (this.currentPage && this.currentPage.id === data.id) {
-        this.setCurrentPage(data); // Update the current page in Vuex store
+        this.setCurrentPage(data);
+        this.addToast({ message: `Page ${data.title} updated`, type: 'success' });
+      } else {
+        this.updatePageDetails(data);
       }
     }
   },
