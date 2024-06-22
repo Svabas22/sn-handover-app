@@ -136,15 +136,14 @@ const store = createStore({
         commit('addToast', { message: `Fetch latest page error: ${error.message}`, type: 'danger' });
       }
     },
-    debouncedUpdatePageDetails: debounce(async function ({ commit }, page) {
+    debouncedUpdatePageDetails: debounce(async function ({ commit }, { page, source }) {
       try {
-        commit('setLastUpdateSource', 'client'); // Set source to client before updating
         const response = await fetch(`/api/records/${page.id}`, {
           method: 'PUT',
           headers: {
             'Content-Type': 'application/json'
           },
-          body: JSON.stringify(page)
+          body: JSON.stringify({ ...page, source })
         });
         if (!response.ok) {
           throw new Error('Network response was not ok');

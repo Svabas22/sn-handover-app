@@ -290,217 +290,217 @@
       </div>
       <!-- Display client data -->
       <div v-for="(client, clientName) in currentPage.clients" :key="clientName">
-        <h5>{{ clientName }}</h5>
-        <div v-if="client.incidents.length > 0">
-          <h6>Incidents</h6>
-          <table class="table table-fixed">
-            <thead>
-              <tr>
-                <th>Incident Number</th>
-                <th>Status</th>
-                <th>Priority</th>
-                <th>Date Opened</th>
-                <th>Main Problem</th>
-                <th>Notes</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr v-for="incident in client.incidents" :key="incident.incNumber" required>
-                <td>{{ incident.incNumber }}</td>
-                <td>
-                  <div v-if="!editMode">{{ incident.status }}</div>
-                  <div v-else>
-                    <select v-model="incident.status" required>
-                      <option value="Active">Active</option>
-                      <option value="Awaiting user info">Awaiting User Info</option>
-                      <option value="Awaiting third party">Awaiting Third Party</option>
-                      <option value="Resolved">Resolved</option>
-                    </select>
-                  </div>
-                </td>
-                <td>
-                  <div v-if="!editMode">{{ incident.priority }}</div>
-                  <div v-else>
-                    <select v-model="incident.priority" required>
-                      <option value="P4 - Low">P4 - Low</option>
-                      <option value="P3 - moderate">P3 - moderate</option>
-                      <option value="P2 - high">P2 - high</option>
-                      <option value="P1 - Critical">P1 - Critical</option>
-                    </select>
-                  </div>
-                </td>
-                <td>
-                  <div v-if="!editMode">{{ incident.dateOpened }}</div>
-                  <div v-else>
-                    <input type="datetime-local" class="form-control" id="dateOpened" v-model="incident.dateOpened" :max="maxDate" required>
-                  </div>
-                </td>
-                <td>
-                  <div v-if="!editMode">{{ incident.mainProblem }}</div>
-                  <div v-else>
-                    <textarea type="text" v-model="incident.mainProblem" class="form-control custom-textarea" required></textarea>
-                  </div>
-                </td>
-                <td>
-                  <div v-if="!editMode">{{ incident.notes }}</div>
-                  <div v-else>
-                    <textarea type="text" v-model="incident.notes" class="form-control custom-textarea"></textarea>
-                  </div>
-                </td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-        <div v-if="client.problems.length > 0">
-          <h6>Problems</h6>
-          <table class="table table-fixed">
-            <thead>
-              <tr>
-                <th>Problem Number</th>
-                <th>Status</th>
-                <th>Priority</th>
-                <th>Root Cause analysis</th>
-                <th>Notes</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr v-for="problem in client.problems" :key="problem.prbNumber" required>
-                <td>{{ problem.prbNumber }}</td>
-                <td>
-                  <div v-if="!editMode">{{ problem.status }}</div>
-                  <div v-else>
-                    <select v-model="problem.status" required>
-                      <option value="Active">Active</option>
-                      <option value="Awaiting user info">Awaiting User Info</option>
-                      <option value="Awaiting third party">Awaiting Third Party</option>
-                      <option value="Resolved">Resolved</option>
-                    </select>
-                  </div>
-                </td>
-                <td>
-                  <div v-if="!editMode">{{ problem.priority }}</div>
-                  <div v-else>
-                    <select v-model="problem.priority" required>
-                      <option value="P4 - Low">P4 - Low</option>
-                      <option value="P3 - moderate">P3 - moderate</option>
-                      <option value="P2 - high">P2 - high</option>
-                      <option value="P1 - Critical">P1 - Critical</option>
-                    </select>
-                  </div>
-                </td>
-                <td>
-                  <div v-if="!editMode">{{ problem.rca }}</div>
-                  <div v-else>
-                    <textarea type="text" v-model="problem.rca" class="form-control custom-textarea" required></textarea>
-                  </div>
-                </td>
-                <td>
-                  <div v-if="!editMode">{{ problem.notes }}</div>
-                  <div v-else>
-                    <textarea type="text" v-model="problem.notes" class="form-control custom-textarea"></textarea>
-                  </div>
-                </td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-
-        <div v-if="client.changes.length > 0">
-          <h6>Changes</h6>
-          <table class="table table-fixed">
-            <thead>
-              <tr>
-                <th>Change Number</th>
-                <th>Status</th>
-                <th>Start Date</th>
-                <th>End Date</th>
-                <th>Notes</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr v-for="change in client.changes" :key="change.chgNumber" required>
-                <td>{{ change.chgNumber }}</td>
-                <td>
-                  <div v-if="!editMode">{{ change.status }}</div>
-                  <div v-else>
-                    <select v-model="change.status" required>
-                      <option value="New">New</option>
-                      <option value="Assess">Assess</option>
-                      <option value="Authorize">Authorize</option>
-                      <option value="Scheduled">Scheduled</option>
-                      <option value="Implement">Implement</option>
-                      <option value="Review">Review</option>
-                      <option value="Closed">Closed</option>
-                    </select>
-                  </div>
-                </td>
-                <td>
-                  <div v-if="!editMode">{{ change.startDate }}</div>
-                  <div v-else>
-                    <input type="datetime-local" class="form-control" id="startDate" v-model="change.startDate" required/>
-                  </div>
-                </td>
-                <td>
-                  <div v-if="!editMode">{{ change.endDate }}</div>
-                  <div v-else>
-                    <input type="datetime-local" class="form-control" id="endDate" v-model="change.endDate" required/>
-                  </div>
-                </td>
-                <td>
-                  <div v-if="!editMode">{{ change.notes }}</div>
-                  <div v-else>
-                    <textarea type="text" v-model="change.notes" class="form-control custom-textarea"></textarea>
-                  </div>
-                </td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-
-        <div v-if="client.serviceRequests.length > 0">
-          <h6>Service Requests</h6>
-          <table class="table table-fixed">
-            <thead>
-              <tr>
-                <th>Request Number</th>
-                <th>Status</th>
-                <th>Short request description</th>
-                <th>Notes</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr v-for="request in client.serviceRequests" :key="request.ritmNumber" required>
-                <td>{{ request.ritmNumber }}</td>
-                <td>
-                  <div v-if="!editMode">{{ request.status }}</div>
-                  <div v-else>
-                    <select v-model="request.status" required>
-                      <option value="Draft">Draft</option>
-                      <option value="Awaiting Approval">Awaiting Approval</option>
-                      <option value="Pending">Pending</option>
-                      <option value="Work in Progress">Work in Progress</option>
-                      <option value="Closed">Closed</option>
-                    </select>
-                  </div>
-                </td>
-                <td>
-                  <div v-if="!editMode">{{ request.desc }}</div>
-                  <div v-else>
-                    <textarea type="text" v-model="request.desc" class="form-control custom-textarea" required></textarea>
-                  </div>
-                </td>
-                <td>
-                  <div v-if="!editMode">{{ request.notes }}</div>
-                  <div v-else>
-                    <textarea type="text" v-model="request.notes" class="form-control custom-textarea"></textarea>
-                  </div>
-                </td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-
+      <h5>{{ clientName }}</h5>
+      <div v-if="client.incidents.length > 0">
+        <h6>Incidents</h6>
+        <table class="table table-fixed">
+          <thead>
+            <tr>
+              <th>Incident Number</th>
+              <th>Status</th>
+              <th>Priority</th>
+              <th>Date Opened</th>
+              <th class="main-problem">Main Problem</th>
+              <th>Notes</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr v-for="incident in client.incidents" :key="incident.incNumber" required>
+              <td>{{ incident.incNumber }}</td>
+              <td>
+                <div v-if="!editMode">{{ incident.status }}</div>
+                <div v-else>
+                  <select v-model="incident.status" required>
+                    <option value="Active">Active</option>
+                    <option value="Awaiting user info">Awaiting User Info</option>
+                    <option value="Awaiting third party">Awaiting Third Party</option>
+                    <option value="Resolved">Resolved</option>
+                  </select>
+                </div>
+              </td>
+              <td>
+                <div v-if="!editMode">{{ incident.priority }}</div>
+                <div v-else>
+                  <select v-model="incident.priority" required>
+                    <option value="P4 - Low">P4 - Low</option>
+                    <option value="P3 - moderate">P3 - moderate</option>
+                    <option value="P2 - high">P2 - high</option>
+                    <option value="P1 - Critical">P1 - Critical</option>
+                  </select>
+                </div>
+              </td>
+              <td>
+                <div v-if="!editMode">{{ incident.dateOpened }}</div>
+                <div v-else>
+                  <input type="datetime-local" class="form-control" id="dateOpened" v-model="incident.dateOpened" :max="maxDate" required>
+                </div>
+              </td>
+              <td class="main-problem">
+                <div v-if="!editMode">{{ incident.mainProblem }}</div>
+                <div v-else>
+                  <textarea type="text" v-model="incident.mainProblem" class="form-control custom-textarea"></textarea>
+                </div>
+              </td>
+              <td>
+                <div v-if="!editMode">{{ incident.notes }}</div>
+                <div v-else>
+                  <textarea type="text" v-model="incident.notes" class="form-control custom-textarea"></textarea>
+                </div>
+              </td>
+            </tr>
+          </tbody>
+        </table>
       </div>
+      <div v-if="client.problems.length > 0">
+        <h6>Problems</h6>
+        <table class="table table-fixed">
+          <thead>
+            <tr>
+              <th>Problem Number</th>
+              <th>Status</th>
+              <th>Priority</th>
+              <th>Root Cause analysis</th>
+              <th>Notes</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr v-for="problem in client.problems" :key="problem.prbNumber" required>
+              <td>{{ problem.prbNumber }}</td>
+              <td>
+                <div v-if="!editMode">{{ problem.status }}</div>
+                <div v-else>
+                  <select v-model="problem.status" required>
+                    <option value="Active">Active</option>
+                    <option value="Awaiting user info">Awaiting User Info</option>
+                    <option value="Awaiting third party">Awaiting Third Party</option>
+                    <option value="Resolved">Resolved</option>
+                  </select>
+                </div>
+              </td>
+              <td>
+                <div v-if="!editMode">{{ problem.priority }}</div>
+                <div v-else>
+                  <select v-model="problem.priority" required>
+                    <option value="P4 - Low">P4 - Low</option>
+                    <option value="P3 - moderate">P3 - moderate</option>
+                    <option value="P2 - high">P2 - high</option>
+                    <option value="P1 - Critical">P1 - Critical</option>
+                  </select>
+                </div>
+              </td>
+              <td>
+                <div v-if="!editMode">{{ problem.rca }}</div>
+                <div v-else>
+                  <textarea type="text" v-model="problem.rca" class="form-control custom-textarea" required></textarea>
+                </div>
+              </td>
+              <td>
+                <div v-if="!editMode">{{ problem.notes }}</div>
+                <div v-else>
+                  <textarea type="text" v-model="problem.notes" class="form-control custom-textarea"></textarea>
+                </div>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div v-if="client.changes.length > 0">
+        <h6>Changes</h6>
+        <table class="table table-fixed">
+          <thead>
+            <tr>
+              <th>Change Number</th>
+              <th>Status</th>
+              <th>Start Date</th>
+              <th>End Date</th>
+              <th>Notes</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr v-for="change in client.changes" :key="change.chgNumber" required>
+              <td>{{ change.chgNumber }}</td>
+              <td>
+                <div v-if="!editMode">{{ change.status }}</div>
+                <div v-else>
+                  <select v-model="change.status" required>
+                    <option value="New">New</option>
+                    <option value="Assess">Assess</option>
+                    <option value="Authorize">Authorize</option>
+                    <option value="Scheduled">Scheduled</option>
+                    <option value="Implement">Implement</option>
+                    <option value="Review">Review</option>
+                    <option value="Closed">Closed</option>
+                  </select>
+                </div>
+              </td>
+              <td>
+                <div v-if="!editMode">{{ change.startDate }}</div>
+                <div v-else>
+                  <input type="datetime-local" class="form-control" id="startDate" v-model="change.startDate" required/>
+                </div>
+              </td>
+              <td>
+                <div v-if="!editMode">{{ change.endDate }}</div>
+                <div v-else>
+                  <input type="datetime-local" class="form-control" id="endDate" v-model="change.endDate" required/>
+                </div>
+              </td>
+              <td>
+                <div v-if="!editMode">{{ change.notes }}</div>
+                <div v-else>
+                  <textarea type="text" v-model="change.notes" class="form-control custom-textarea"></textarea>
+                </div>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div v-if="client.serviceRequests.length > 0">
+        <h6>Service Requests</h6>
+        <table class="table table-fixed">
+          <thead>
+            <tr>
+              <th>Request Number</th>
+              <th>Status</th>
+              <th class="short-request-description">Short request description</th>
+              <th>Notes</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr v-for="request in client.serviceRequests" :key="request.ritmNumber" required>
+              <td>{{ request.ritmNumber }}</td>
+              <td>
+                <div v-if="!editMode">{{ request.status }}</div>
+                <div v-else>
+                  <select v-model="request.status" required>
+                    <option value="Draft">Draft</option>
+                    <option value="Awaiting Approval">Awaiting Approval</option>
+                    <option value="Pending">Pending</option>
+                    <option value="Work in Progress">Work in Progress</option>
+                    <option value="Closed">Closed</option>
+                  </select>
+                </div>
+              </td>
+              <td class="short-request-description">
+                <div v-if="!editMode">{{ request.desc }}</div>
+                <div v-else>
+                  <textarea type="text" v-model="request.desc" class="form-control custom-textarea" required></textarea>
+                </div>
+              </td>
+              <td>
+                <div v-if="!editMode">{{ request.notes }}</div>
+                <div v-else>
+                  <textarea type="text" v-model="request.notes" class="form-control custom-textarea"></textarea>
+                </div>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+    </div>
     </div>
     <div v-else>No data available</div>
   </div>
@@ -568,11 +568,16 @@ export default {
   methods: {
     ...mapActions(['fetchPageDetails', 'debouncedUpdatePageDetails', 'deletePage', 'addToast', 'fetchPages', 'setPages', 'setCurrentPage', 'fetchShifts', 'fetchShiftDetails']),
     toggleEditMode() {
-      if (this.editMode) {  
-        this.debouncedUpdatePageDetails(this.currentPage);
-        this.$socket.emit('editPage', this.currentPage);
+      if (this.editMode) {
+        if (this.hasChanges()) {
+          this.debouncedUpdatePageDetails({ page: this.currentPage, source: this.$socket.id });
+          this.$socket.emit('editPage', this.currentPage);
+        }
       }
       this.editMode = !this.editMode;
+    },
+    hasChanges() {
+      return JSON.stringify(this.currentPage) !== JSON.stringify(this.originalPageState);
     },
     //--Shift addition--
     async updateEngineersOnShift() {
@@ -732,12 +737,11 @@ export default {
     const docId = this.$route.params.id;
     this.fetchShifts();
     if (docId) {
-    this.fetchPageDetails(docId);
-  } 
-  else {
-    console.error("Page ID is undefined.");
-  }
-  this.$socket.on('pageUpdated', this.handlePageUpdated);
+      this.fetchPageDetails(docId);
+    } else {
+      console.error("Page ID is undefined.");
+    }
+    this.$socket.on('pageUpdated', this.handlePageUpdated);
   },
   beforeUnmount() {
     this.$socket.off('pageUpdated', this.handlePageUpdated);
@@ -796,6 +800,13 @@ export default {
 
 .table-fixed th:last-child, .table-fixed td:last-child {
   white-space: normal;  /* Allows text wrapping in the last column */
+}
+
+.table-fixed th.main-problem, .table-fixed td.main-problem,
+.table-fixed th.short-request-description, .table-fixed td.short-request-description {
+  white-space: normal; /* Allows text wrapping */
+  word-wrap: break-word; /* Wraps long words */
+  overflow: visible; /* Ensures the full text is visible */
 }
 
 .custom-textarea {
