@@ -511,7 +511,6 @@
 import { mapState, mapActions } from 'vuex';
 //import axios from 'axios';
 
-
 export default {
   data() {
     return {
@@ -568,9 +567,7 @@ export default {
   },
   methods: {
     ...mapActions(['fetchPageDetails', 'updatePageDetails', 'deletePage', 'addToast', 'fetchPages', 'setPages', 'setCurrentPage', 'fetchShifts', 'fetchShiftDetails']),
-
     toggleEditMode() {
-
       if (this.editMode) {  
         this.updatePageDetails(this.currentPage);
         this.$socket.emit('editPage', this.currentPage);
@@ -675,7 +672,7 @@ export default {
       this.newChange = {
         client: '',
         chgNumber: '',
-        status: 'New',
+        status: 'Active',
         startDate: '',
         endDate: '',
         notes: ''
@@ -724,12 +721,11 @@ export default {
       }
     },
     handlePageUpdated(data) {
-      console.log('Page updated:', data);
+      console.log('Page updated:', data); // Add logging for client-side updates
+      this.updatePageDetails(data); // Commit the mutation to update the Vuex store
+
       if (this.currentPage && this.currentPage.id === data.id) {
-        this.setCurrentPage(data);
-        this.addToast({ message: `Page ${data.title} updated`, type: 'success' });
-      } else {
-        this.updatePageDetails(data);
+        this.setCurrentPage(data); // Update the current page in Vuex store
       }
     }
   },

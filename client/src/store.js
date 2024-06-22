@@ -5,13 +5,12 @@ import io from 'socket.io-client';
 // Ensure that the SOCKET_URI is correctly configured in your environment variables
 // const socket = io('http://localhost:3000');
 const socket = io('https://sn-handover-app.azurewebsites.net');
-
 const store = createStore({
   state: {
     pages: [],
     shifts: [],
     currentPage: null,
-    toasts: [],  // Array to hold toast messages
+    toasts: [],
     toastId: 0,
     searchResults: [],
     currentShift: null,
@@ -64,14 +63,14 @@ const store = createStore({
     setSearchResults(state, results) {
       state.searchResults = results;
     },
-    setIncidents(state, incidents) { 
+    setIncidents(state, incidents) {
       state.incidents = incidents;
     },
   },
   actions: {
     async fetchPages({ commit, dispatch }) {
       const token = localStorage.getItem('accessToken');
-      console.log("Token:", token); 
+      console.log("Token:", token);
       try {
         console.log(localStorage.getItem('user'));
         const response = await fetch('/api/records');
@@ -89,15 +88,15 @@ const store = createStore({
       }
     },
     async performSearch({ commit }, searchTerm) {
-      console.log("Performing search for:", searchTerm);  // Debug: Log the search term
+      console.log("Performing search for:", searchTerm); // Debug: Log the search term
       try {
         const response = await fetch(`/api/search?q=${encodeURIComponent(searchTerm)}`);
-        console.log("Response received:", response);  // Debug: Log the response
+        console.log("Response received:", response); // Debug: Log the response
         if (!response.ok) {
           throw new Error(`HTTP error! Status: ${response.status}`);
         }
         const results = await response.json();
-        console.log("Search results:", results);  // Debug: Log the search results
+        console.log("Search results:", results); // Debug: Log the search results
         commit('setSearchResults', results);
       } catch (error) {
         console.error('Search error:', error);
@@ -111,7 +110,6 @@ const store = createStore({
           throw new Error(`HTTP status: ${response.status}`);
         }
         const text = await response.text();
-        console.log("Received response text:", response);
         try {
           const data = JSON.parse(text);
           console.log("Received response:", data);
@@ -153,6 +151,7 @@ const store = createStore({
         const data = await response.json();
         commit('setCurrentPage', data);
         commit('updatePage', data);
+        // commit('addToast', { message: 'Page details updated successfully.', type: 'success' });
       } catch (error) {
         console.error('Error updating page details:', error);
         commit('addToast', { message: `Update page error: ${error.message}`, type: 'danger' });
@@ -199,7 +198,7 @@ const store = createStore({
         commit('addToast', { message: `Delete page error: ${error.message}`, type: 'danger' });
       }
     },
-    // Shift management
+    // shift management
     async fetchShifts({ commit }) {
       try {
         const response = await fetch('/api/shifts');
@@ -270,8 +269,6 @@ const store = createStore({
     }
   },
 });
-
-
 
 socket.on('pageCreated', (data) => {
   store.commit('addPage', data);
