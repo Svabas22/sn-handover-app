@@ -137,7 +137,7 @@ const store = createStore({
         commit('addToast', { message: `Fetch latest page error: ${error.message}`, type: 'danger' });
       }
     },
-    async updatePageDetails({ commit }, page) {
+    debouncedUpdatePageDetails: debounce(async function ({ commit }, page) {
       try {
         const response = await fetch(`/api/records/${page.id}`, {
           method: 'PUT',
@@ -152,12 +152,11 @@ const store = createStore({
         const data = await response.json();
         commit('setCurrentPage', data);
         commit('updatePage', data);
-        //commit('addToast', { message: 'Page details updated successfully.', type: 'success' });
       } catch (error) {
         console.error('Error updating page details:', error);
         commit('addToast', { message: `Update page error: ${error.message}`, type: 'danger' });
       }
-    },
+    }, 2000),
     async copyHandover({ commit }) {
       try {
         const response = await fetch('/api/copy-handover', { method: 'POST' });
@@ -293,27 +292,5 @@ socket.on('pageDeleted', (data) => {
 });
 
 // Debounce updatePageDetails and ensure it's properly integrated
-const debouncedUpdatePageDetails = debounce(async function({ commit }, page) {
-  try {
-    const response = await fetch(`/api/records/${page.id}`, {
-      method: 'PUT',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify(page)
-    });
-    if (!response.ok) {
-      throw new Error('Network response was not ok');
-    }
-    const data = await response.json();
-    commit('setCurrentPage', data);
-    commit('updatePage', data);
-  } catch (error) {
-    console.error('Error updating page details:', error);
-    commit('addToast', { message: `Update page error: ${error.message}`, type: 'danger' });
-  }
-}, 2000);
-
-store.actions.updatePageDetails = debouncedUpdatePageDetails;
 
 export default store;

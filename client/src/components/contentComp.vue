@@ -567,12 +567,12 @@ export default {
     }
   },
   methods: {
-    ...mapActions(['fetchPageDetails', 'updatePageDetails', 'deletePage', 'addToast', 'fetchPages', 'setPages', 'setCurrentPage', 'fetchShifts', 'fetchShiftDetails']),
+    ...mapActions(['fetchPageDetails', 'debouncedUpdatePageDetails', 'deletePage', 'addToast', 'fetchPages', 'setPages', 'setCurrentPage', 'fetchShifts', 'fetchShiftDetails']),
 
     toggleEditMode() {
 
       if (this.editMode) {  
-        this.updatePageDetails(this.currentPage);
+        this.debouncedUpdatePageDetails(this.currentPage);
         this.$socket.emit('editPage', this.currentPage);
       }
       this.editMode = !this.editMode;
@@ -599,7 +599,7 @@ export default {
       });
 
       try {
-        await this.updatePageDetails(this.currentPage);
+        await this.debouncedUpdatePageDetails(this.currentPage);
         this.$socket.emit('editPage', this.currentPage);
         this.resetNewIncident();
         this.$router.push({ name: 'HomePage' });
@@ -631,7 +631,7 @@ export default {
       });
 
       try {
-        await this.updatePageDetails(this.currentPage);
+        await this.debouncedUpdatePageDetails(this.currentPage);
         this.$socket.emit('editPage', this.currentPage);
         this.resetNewProblem();
         this.$router.push({ name: 'HomePage' });
@@ -662,7 +662,7 @@ export default {
       });
 
       try {
-        await this.updatePageDetails(this.currentPage);
+        await this.debouncedUpdatePageDetails(this.currentPage);
         this.$socket.emit('editPage', this.currentPage);
         this.resetNewChange();
         this.closeModal('addChangeModal');
@@ -692,7 +692,7 @@ export default {
       });
 
       try {
-        await this.updatePageDetails(this.currentPage);
+        await this.debouncedUpdatePageDetails(this.currentPage);
         this.$socket.emit('editPage', this.currentPage);
         this.resetNewRequest();
         this.closeModal('addRequestModal');
@@ -725,7 +725,7 @@ export default {
     },
     handlePageUpdated(data) {
       console.log('Page updated:', data); // Add logging for client-side updates
-      this.updatePageDetails(data); // Commit the mutation to update the Vuex store
+      this.debouncedUpdatePageDetails(data); // Commit the mutation to update the Vuex store
 
       if (this.currentPage && this.currentPage.id === data.id) {
         this.setCurrentPage(data); // Update the current page in Vuex store
