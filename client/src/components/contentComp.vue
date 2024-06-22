@@ -219,7 +219,7 @@
                 </div>
                 <div class="mb-3">
                   <label for="status" class="form-label">Status</label>
-                  <select class="form-select" id="status" v-model="newChange.status" required>
+                  <select class="form-select" id="status" v-model="newRequest.status" required>
                     <option value="Draft">Draft</option>
                     <option value="Awaiting Approval">Awaiting Approval</option>
                     <option value="Pending">Pending</option>
@@ -566,10 +566,10 @@ export default {
     }
   },
   methods: {
-    ...mapActions(['fetchPageDetails', 'updatePageDetails', 'deletePage', 'addToast', 'fetchPages', 'setPages', 'setCurrentPage', 'fetchShifts', 'fetchShiftDetails']),
+    ...mapActions(['fetchPageDetails', 'debouncedUpdatePageDetails', 'deletePage', 'addToast', 'fetchPages', 'setPages', 'setCurrentPage', 'fetchShifts', 'fetchShiftDetails']),
     toggleEditMode() {
       if (this.editMode) {  
-        this.updatePageDetails(this.currentPage);
+        this.debouncedUpdatePageDetails(this.currentPage);
         this.$socket.emit('editPage', this.currentPage);
       }
       this.editMode = !this.editMode;
@@ -596,7 +596,7 @@ export default {
       });
 
       try {
-        await this.updatePageDetails(this.currentPage);
+        await this.debouncedUpdatePageDetails(this.currentPage);
         this.$socket.emit('editPage', this.currentPage);
         this.resetNewIncident();
         this.$router.push({ name: 'HomePage' });
@@ -628,7 +628,7 @@ export default {
       });
 
       try {
-        await this.updatePageDetails(this.currentPage);
+        await this.debouncedUpdatePageDetails(this.currentPage);
         this.$socket.emit('editPage', this.currentPage);
         this.resetNewProblem();
         this.$router.push({ name: 'HomePage' });
@@ -659,7 +659,7 @@ export default {
       });
 
       try {
-        await this.updatePageDetails(this.currentPage);
+        await this.debouncedUpdatePageDetails(this.currentPage);
         this.$socket.emit('editPage', this.currentPage);
         this.resetNewChange();
         
@@ -689,7 +689,7 @@ export default {
       });
 
       try {
-        await this.updatePageDetails(this.currentPage);
+        await this.debouncedUpdatePageDetails(this.currentPage);
         this.$socket.emit('editPage', this.currentPage);
         this.resetNewRequest();
         
@@ -721,13 +721,12 @@ export default {
       }
     },
     handlePageUpdated(data) {
-      console.log('Page updated:', data); // Add logging for client-side updates
-      this.updatePageDetails(data); // Commit the mutation to update the Vuex store
-
+      console.log('Page updated event received:', data);
       if (this.currentPage && this.currentPage.id === data.id) {
-        this.setCurrentPage(data); // Update the current page in Vuex store
+        console.log('Updating current page:', data);
+        this.setCurrentPage(data);
       }
-    }
+    },
   },
   created() {
     const docId = this.$route.params.id;
@@ -793,6 +792,10 @@ export default {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;  /* Ensures no text wrap in table cells */
+}
+
+.table-fixed th:last-child, .table-fixed td:last-child {
+  white-space: normal;  /* Allows text wrapping in the last column */
 }
 
 .custom-textarea {

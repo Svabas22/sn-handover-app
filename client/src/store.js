@@ -1,6 +1,6 @@
 import { createStore } from 'vuex';
 import io from 'socket.io-client';
-//import { debounce } from 'lodash';
+import { debounce } from 'lodash';
 
 // Ensure that the SOCKET_URI is correctly configured in your environment variables
 // const socket = io('http://localhost:3000');
@@ -136,8 +136,9 @@ const store = createStore({
         commit('addToast', { message: `Fetch latest page error: ${error.message}`, type: 'danger' });
       }
     },
-    async updatePageDetails({ commit }, page) {
+    debouncedUpdatePageDetails: debounce(async function ({ commit }, page) {
       try {
+        commit('setLastUpdateSource', 'client'); // Set source to client before updating
         const response = await fetch(`/api/records/${page.id}`, {
           method: 'PUT',
           headers: {
@@ -151,12 +152,11 @@ const store = createStore({
         const data = await response.json();
         commit('setCurrentPage', data);
         commit('updatePage', data);
-        // commit('addToast', { message: 'Page details updated successfully.', type: 'success' });
       } catch (error) {
         console.error('Error updating page details:', error);
         commit('addToast', { message: `Update page error: ${error.message}`, type: 'danger' });
       }
-    },
+    }, 2000),
     async copyHandover({ commit }) {
       try {
         const response = await fetch('/api/copy-handover', { method: 'POST' });
@@ -275,19 +275,26 @@ socket.on('pageCreated', (data) => {
 });
 
 socket.on('pageUpdated', (data) => {
-  store.commit('updatePage', data);
-  if (store.state.currentPage && store.state.currentPage.id === data.id) {
-    store.commit('setCurrentPage', data);
-    store.commit('addToast', { message: `Page ${store.state.currentPage.title} updated`, type: 'success' });
+  console.log('Page updated event received:', data);
+  if (store.state.lastUpdateSource !== 'client') { // Only update if not from client
+    store.commit('updatePage', data);
+    if (store.state.currentPage && store.state.currentPage.id === data.id) {
+      store.commit('setCurrentPage', data);
+      store.commit('addToast', { message: `Page ${store.state.currentPage.title} updated`, type: 'success' });
+    }
   }
+  store.commit('setLastUpdateSource', 'server'); // Reset to server after handling
 });
 
 socket.on('pageDeleted', (data) => {
+  console.log('Page deleted event received:', data);
   store.commit('deletePage', data.id);
   if (store.state.currentPage && store.state.currentPage.id === data.id) {
     store.commit('setCurrentPage', null);
     store.commit('addToast', { message: `Page ${store.state.currentPage.title} deleted`, type: 'danger' });
   }
+  store.commit('setLastUpdateSource', 'server'); // Reset to server after handling
 });
+
 
 export default store;

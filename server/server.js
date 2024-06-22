@@ -106,10 +106,12 @@ io.on('connection', (socket) => {
   });
 
   socket.on('editPage', (data) => {
+    console.log('Edit page event received:', data);
     io.emit('pageUpdated', data);
   });
 
   socket.on('deletePage', (data) => {
+    console.log('Delete page event received:', data);
     io.emit('pageDeleted', data);
   });
 });
