@@ -125,16 +125,29 @@ app.get('/api/search', async (req, res) => {
     return res.status(500).json({ error: 'Cosmos DB container is not initialized' });
   }
   try {
+    // This query assumes `incNumber` can be in any client and any incident.
     const querySpec = {
-      query: "SELECT c.id, c.title FROM c WHERE CONTAINS(c.title, @searchQuery)",
+      query: `SELECT c.id, c.title, c.clients
+              FROM c
+              JOIN client IN c.clients
+              JOIN incident IN client.incidents
+              WHERE incident.incNumber = @searchQuery`,
       parameters: [{ name: "@searchQuery", value: searchQuery }]
     };
+
     const { resources: items } = await container.items.query(querySpec).fetchAll();
-    res.status(200).json(items);
+    if (items.length > 0) {
+      console.log("Search results:", items);  // Log to verify results
+      res.status(200).json(items);
+    } else {
+      res.status(404).json({ message: 'No results found' });
+    }
   } catch (error) {
+    console.error('Failed to fetch search results:', error);
     res.status(500).json({ error: error.message });
   }
 });
+
 
 app.post('/api/records', async (req, res) => {
   const { id, title, date, engineersOnShift, clients, pageId } = req.body;

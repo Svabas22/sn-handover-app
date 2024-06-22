@@ -1,7 +1,5 @@
 import { createStore } from 'vuex';
 import io from 'socket.io-client';
-
-
 // Ensure that the SOCKET_URI is correctly configured in your environment variables
 //const socket = io('http://localhost:3000');
 const socket = io('https://sn-handover-app.azurewebsites.net');
@@ -89,14 +87,16 @@ const store = createStore({
       }
     },
     async performSearch({ commit }, searchTerm) {
+      console.log("Performing search for:", searchTerm);  // Debug: Log the search term
       try {
         const response = await fetch(`/api/search?q=${encodeURIComponent(searchTerm)}`);
+        console.log("Response received:", response);  // Debug: Log the response
         if (!response.ok) {
-          throw new Error('Network response was not ok');
+          throw new Error(`HTTP error! Status: ${response.status}`);
         }
         const results = await response.json();
+        console.log("Search results:", results);  // Debug: Log the search results
         commit('setSearchResults', results);
-        commit('addToast', { message: 'Search completed successfully.', type: 'success' });
       } catch (error) {
         console.error('Search error:', error);
         commit('addToast', { message: `Search error: ${error.message}`, type: 'danger' });
