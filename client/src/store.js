@@ -1,5 +1,7 @@
 import { createStore } from 'vuex';
 import io from 'socket.io-client';
+import { debounce } from 'lodash';
+
 // Ensure that the SOCKET_URI is correctly configured in your environment variables
 //const socket = io('http://localhost:3000');
 const socket = io('https://sn-handover-app.azurewebsites.net');
@@ -22,7 +24,6 @@ const store = createStore({
       state.currentPage = page;
     },
     addPage(state, page) {
-      
       state.pages.push(page);
     },
     setShifts(state, shifts) {
@@ -290,5 +291,29 @@ socket.on('pageDeleted', (data) => {
     store.commit('addToast', { message: `Page ${store.state.currentPage.title} deleted`, type: 'danger' })
   }
 });
+
+// Debounce updatePageDetails and ensure it's properly integrated
+const debouncedUpdatePageDetails = debounce(async function({ commit }, page) {
+  try {
+    const response = await fetch(`/api/records/${page.id}`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(page)
+    });
+    if (!response.ok) {
+      throw new Error('Network response was not ok');
+    }
+    const data = await response.json();
+    commit('setCurrentPage', data);
+    commit('updatePage', data);
+  } catch (error) {
+    console.error('Error updating page details:', error);
+    commit('addToast', { message: `Update page error: ${error.message}`, type: 'danger' });
+  }
+}, 2000);
+
+store.actions.updatePageDetails = debouncedUpdatePageDetails;
 
 export default store;
