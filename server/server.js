@@ -8,7 +8,8 @@ const cors = require('cors');
 const path = require('path');
 const session = require('express-session');
 const http = require('http');
-const socketIo = require('socket.io');
+const { Server } = require("socket.io");
+const { useAzureSocketIO } = require("@azure/web-pubsub-socket.io");
 const cookieParser = require('cookie-parser');
 const morgan = require('morgan');
 const redis = require('redis');
@@ -23,12 +24,32 @@ const isAuthenticated = require('./auth/isAuthenticated');
 
 const app = express();
 const server = http.createServer(app);
-const io = socketIo(server, {
+const io = new Server(server);
+useAzureSocketIO(io, {
+  hub: "mainhub", // The hub name can be any valid string.
+  connectionString: process.env.PUBSUB_STRING,
   cors: {
     origin: '*', // Allow all origins for simplicity
     methods: ["GET", "POST"]
   }
 });
+// const io = socketIo(server, {
+//   cors: {
+//     origin: '*', // Allow all origins for simplicity
+//     methods: ["GET", "POST"]
+//   }
+// });
+
+io.on("connection", (socket) => {
+  // Sends a message to the client
+  socket.emit("hello", "world");
+
+  // Receives a message from the client
+  socket.on("howdy", (arg) => {
+      console.log(arg);   // Prints "stranger"
+  })
+});
+
 
 app.use(cors());
 app.use(express.json());

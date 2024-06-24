@@ -10,7 +10,9 @@ import router from './router';
 import io from 'socket.io-client';
 
 //const socket = io('http://localhost:3000');
-const socket = io('https://sn-handover-app.azurewebsites.net');
+const socket = io("https://ho-socket.webpubsub.azure.com", {
+  path: "/clients/socketio/hubs/mainhub",
+});
 // Create Vue application
 const app = createApp(App);
 app.config.globalProperties.$socket = socket;

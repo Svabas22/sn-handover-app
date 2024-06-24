@@ -102,7 +102,7 @@ export default {
       const progress = this.calculateSLAProgress(incident);
       return {
         'bg-success': progress <= 75,
-        'bg-warning': progress > 75 && progress <= 90,
+        'bg-warning': progress > 50 && progress <= 90,
         'bg-danger': progress > 90
       };
     }

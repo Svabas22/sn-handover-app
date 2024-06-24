@@ -3,8 +3,7 @@ import io from 'socket.io-client';
 import { debounce } from 'lodash';
 
 // Ensure that the SOCKET_URI is correctly configured in your environment variables
-// const socket = io('http://localhost:3000');
-const socket = io('https://sn-handover-app.azurewebsites.net');
+const socket = io('https://ho-socket.webpubsub.azure.com');
 const store = createStore({
   state: {
     pages: [],
@@ -15,6 +14,7 @@ const store = createStore({
     searchResults: [],
     currentShift: null,
     incidents: [],
+    lastUpdateSource: 'server', // Track the source of the last update
   },
   mutations: {
     setPages(state, pages) {
@@ -65,6 +65,9 @@ const store = createStore({
     },
     setIncidents(state, incidents) {
       state.incidents = incidents;
+    },
+    setLastUpdateSource(state, source) {
+      state.lastUpdateSource = source;
     },
   },
   actions: {
@@ -136,14 +139,14 @@ const store = createStore({
         commit('addToast', { message: `Fetch latest page error: ${error.message}`, type: 'danger' });
       }
     },
-    debouncedUpdatePageDetails: debounce(async function ({ commit }, { page, source }) {
+    debouncedUpdatePageDetails: debounce(async function ({ commit }, page) {
       try {
         const response = await fetch(`/api/records/${page.id}`, {
           method: 'PUT',
           headers: {
             'Content-Type': 'application/json'
           },
-          body: JSON.stringify({ ...page, source })
+          body: JSON.stringify(page)
         });
         if (!response.ok) {
           throw new Error('Network response was not ok');

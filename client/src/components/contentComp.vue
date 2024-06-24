@@ -229,7 +229,7 @@
                 </div>
                 <div class="mb-3">
                   <label for="notes" class="form-label">Short request description</label>
-                  <textarea class="form-control" id="notes" v-model="newRequest.desc" rows="3"></textarea>
+                  <textarea class="form-control" id="notes" v-model="newRequest.desc" rows="3" required></textarea>
                 </div>
                 <div class="mb-3">
                   <label for="notes" class="form-label">Notes</label>
@@ -507,15 +507,14 @@
 </template>
 
 <script>
-
 import { mapState, mapActions } from 'vuex';
-//import axios from 'axios';
 
 export default {
   data() {
     return {
       editMode: false,
       userProfile: { role: localStorage.getItem('roles') },
+      originalPageState: null,
       newIncident: {
         client: '',
         incNumber: '',
@@ -573,11 +572,13 @@ export default {
           this.debouncedUpdatePageDetails({ page: this.currentPage, source: this.$socket.id });
           this.$socket.emit('editPage', this.currentPage);
         }
+      } else {
+        this.originalPageState = JSON.stringify(this.currentPage); // Save the original state
       }
       this.editMode = !this.editMode;
     },
     hasChanges() {
-      return JSON.stringify(this.currentPage) !== JSON.stringify(this.originalPageState);
+      return JSON.stringify(this.currentPage) !== this.originalPageState;
     },
     //--Shift addition--
     async updateEngineersOnShift() {
@@ -601,7 +602,7 @@ export default {
       });
 
       try {
-        await this.debouncedUpdatePageDetails(this.currentPage);
+        await this.debouncedUpdatePageDetails({ page: this.currentPage, source: this.$socket.id });
         this.$socket.emit('editPage', this.currentPage);
         this.resetNewIncident();
         this.$router.push({ name: 'HomePage' });
@@ -633,7 +634,7 @@ export default {
       });
 
       try {
-        await this.debouncedUpdatePageDetails(this.currentPage);
+        await this.debouncedUpdatePageDetails({ page: this.currentPage, source: this.$socket.id });
         this.$socket.emit('editPage', this.currentPage);
         this.resetNewProblem();
         this.$router.push({ name: 'HomePage' });
@@ -664,10 +665,9 @@ export default {
       });
 
       try {
-        await this.debouncedUpdatePageDetails(this.currentPage);
+        await this.debouncedUpdatePageDetails({ page: this.currentPage, source: this.$socket.id });
         this.$socket.emit('editPage', this.currentPage);
         this.resetNewChange();
-        
       } catch (error) {
         console.error('Error saving change:', error);
         this.addToast({ message: 'Error saving change:', type: 'danger' });
@@ -694,10 +694,9 @@ export default {
       });
 
       try {
-        await this.debouncedUpdatePageDetails(this.currentPage);
+        await this.debouncedUpdatePageDetails({ page: this.currentPage, source: this.$socket.id });
         this.$socket.emit('editPage', this.currentPage);
         this.resetNewRequest();
-        
       } catch (error) {
         console.error('Error saving service request:', error);
         this.addToast({ message: 'Error saving service request:', type: 'danger' });
@@ -717,7 +716,6 @@ export default {
         try {
           await this.deletePage(this.currentPage.id);
           this.$socket.emit('deletePage', { id: this.currentPage.id }); // Emit event to notify others
-          
           this.$router.push({ name: 'HomePage' }); // Redirect or handle the navigation
         } catch (error) {
           console.error('Failed to delete the page:', error);
@@ -748,6 +746,7 @@ export default {
   }
 };
 </script>
+
 
 <style scoped>
 .main-container {
