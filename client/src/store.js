@@ -1,9 +1,7 @@
 import { createStore } from 'vuex';
-import io from 'socket.io-client';
 import { debounce } from 'lodash';
+import socket from './socket';
 
-// Ensure that the SOCKET_URI is correctly configured in your environment variables
-const socket = io('https://ho-socket.webpubsub.azure.com');
 const store = createStore({
   state: {
     pages: [],
@@ -139,14 +137,14 @@ const store = createStore({
         commit('addToast', { message: `Fetch latest page error: ${error.message}`, type: 'danger' });
       }
     },
-    debouncedUpdatePageDetails: debounce(async function ({ commit }, page) {
+    debouncedUpdatePageDetails: debounce(async function ({ commit }, { page, source }) {
       try {
         const response = await fetch(`/api/records/${page.id}`, {
           method: 'PUT',
           headers: {
             'Content-Type': 'application/json'
           },
-          body: JSON.stringify(page)
+          body: JSON.stringify({ ...page, source })
         });
         if (!response.ok) {
           throw new Error('Network response was not ok');
@@ -158,7 +156,7 @@ const store = createStore({
         console.error('Error updating page details:', error);
         commit('addToast', { message: `Update page error: ${error.message}`, type: 'danger' });
       }
-    }, 2000),
+    }, 200),
     async copyHandover({ commit }) {
       try {
         const response = await fetch('/api/copy-handover', { method: 'POST' });
@@ -166,9 +164,9 @@ const store = createStore({
         if (!response.ok) {
           throw new Error(`HTTP error! status: ${response.status}`);
         }
-        commit('addPage', newPage);
+        //commit('addPage', newPage);
         commit('setCurrentPage', newPage);
-        commit('addToast', { message: 'Handover copied successfully.', type: 'success' });
+        
       } catch (error) {
         console.error('Error creating handover from template:', error);
         commit('addToast', { message: `Copy handover error: ${error.message}`, type: 'danger' });
@@ -271,9 +269,15 @@ const store = createStore({
     }
   },
 });
+socket.removeAllListeners();
 
 socket.on('pageCreated', (data) => {
-  store.commit('addPage', data);
+  console.log('Page created event received:', data);
+  const pageExists = store.state.pages.some(page => page.id === data.id);
+  if (!pageExists) {
+    store.commit('addPage', data);
+    store.commit('addToast', { message: 'Handover copied successfully.', type: 'success' });
+  }
 });
 
 socket.on('pageUpdated', (data) => {
@@ -297,6 +301,5 @@ socket.on('pageDeleted', (data) => {
   }
   store.commit('setLastUpdateSource', 'server'); // Reset to server after handling
 });
-
 
 export default store;

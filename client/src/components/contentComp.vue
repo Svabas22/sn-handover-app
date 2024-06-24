@@ -570,7 +570,7 @@ export default {
       if (this.editMode) {
         if (this.hasChanges()) {
           this.debouncedUpdatePageDetails({ page: this.currentPage, source: this.$socket.id });
-          this.$socket.emit('editPage', this.currentPage);
+          //this.$socket.emit('editPage', this.currentPage);
         }
       } else {
         this.originalPageState = JSON.stringify(this.currentPage); // Save the original state
@@ -739,11 +739,11 @@ export default {
     } else {
       console.error("Page ID is undefined.");
     }
-    this.$socket.on('pageUpdated', this.handlePageUpdated);
+    // this.$socket.on('pageUpdated', this.handlePageUpdated);
   },
-  beforeUnmount() {
-    this.$socket.off('pageUpdated', this.handlePageUpdated);
-  }
+  // beforeUnmount() {
+  //   this.$socket.off('pageUpdated', this.handlePageUpdated);
+  // }
 };
 </script>
 

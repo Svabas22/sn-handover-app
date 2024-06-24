@@ -27,7 +27,7 @@
 </template>
 
 <script>
-import { mapActions, mapState } from 'vuex';
+import { mapActions, mapState, mapMutations } from 'vuex';
 
 export default {
   name: 'SidebarComponent',
@@ -49,6 +49,7 @@ export default {
   },
   methods: {
     ...mapActions(['fetchPages', 'fetchPageDetails', 'createHandoverTemplate', 'copyHandover', 'addToast']),
+    ...mapMutations(['setCurrentPage']),
     loadPage(pageId) {
       this.fetchPageDetails(pageId);
       console.log(this.userProfile.role);
@@ -76,13 +77,13 @@ export default {
     this.fetchPages();
 
     this.$socket.on('pageCreated', (newPage) => {
-      this.$store.commit('addPage', newPage);
+      //this.$store.commit('addPage', newPage);
       this.setCurrentPage(newPage);
     });
   },
-  beforeUnmount() {
-    this.$socket.off('pageCreated');
-  }
+  // beforeUnmount() {
+  //   this.$socket.off('pageCreated');
+  // }
 }
 </script>
 

@@ -27,11 +27,7 @@ const server = http.createServer(app);
 const io = new Server(server);
 useAzureSocketIO(io, {
   hub: "mainhub", // The hub name can be any valid string.
-  connectionString: process.env.PUBSUB_STRING,
-  cors: {
-    origin: '*', // Allow all origins for simplicity
-    methods: ["GET", "POST"]
-  }
+  connectionString: process.argv[2] || process.env.PUBSUB_STRING
 });
 // const io = socketIo(server, {
 //   cors: {
@@ -50,8 +46,14 @@ io.on("connection", (socket) => {
   })
 });
 
+const corsOptions = {
+  origin: ['http://localhost:3000', 'https://sn-handover-app.azurewebsites.net'],
+  methods: ['GET', 'POST', 'PUT', 'DELETE'],
+  allowedHeaders: ["Origin","X-Requested-With","Content-Type","Accept","Authorization"],
+  credentials: true
+};
 
-app.use(cors());
+app.use(cors(corsOptions));
 app.use(express.json());
 app.use(cookieParser());
 app.use(express.urlencoded({ extended: false }));

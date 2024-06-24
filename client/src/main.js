@@ -1,3 +1,4 @@
+// main.js
 import { createApp } from 'vue';
 import axios from 'axios';
 import 'bootstrap/dist/css/bootstrap.min.css';
@@ -7,19 +8,14 @@ import 'bootstrap-icons/font/bootstrap-icons.css';
 import store from './store';
 import App from './App.vue';
 import router from './router';
-import io from 'socket.io-client';
+import socket from './socket.js'; // Import the socket instance
 
-//const socket = io('http://localhost:3000');
-const socket = io("https://ho-socket.webpubsub.azure.com", {
-  path: "/clients/socketio/hubs/mainhub",
-});
-// Create Vue application
+// Attach the socket to the Vue prototype so it can be accessed globally
 const app = createApp(App);
 app.config.globalProperties.$socket = socket;
 app.use(router);
 app.use(bootstrap);
 app.use(store);
-//app.mount('#app');
 
 socket.on('connect', () => {
   console.log('Connected to Socket.IO server');
