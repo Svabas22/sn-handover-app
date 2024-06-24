@@ -19,37 +19,52 @@
             <a class="nav-link active" aria-current="page" href="#" @click="openSlaModal">SLA Progress</a>
           </li>
         </ul>
-        <form class="d-flex" role="search" @submit.prevent="performSearch">
-          <input class="form-control me-2" v-model="searchQuery" type="search" placeholder="Search" aria-label="Search" @input="debounceSearch">
+        <form class="d-flex position-relative" role="search" @submit.prevent="performSearch">
+          <input
+            class="form-control me-2"
+            v-model="searchTerm"
+            type="search"
+            placeholder="Search"
+            aria-label="Search"
+            @keyup.enter="performSearch"
+          />
+          <div v-if="searchResults.length" class="search-results">
+            <ul>
+              <li v-for="result in searchResults" :key="result.id">
+                <a href="#" @click.prevent="loadPage(result.id)">{{ result.title }}</a>
+              </li>
+            </ul>
+          </div>
         </form>
-        <div v-if="searchResults.length" class="search-results">
-          <ul>
-            <li v-for="result in searchResults" :key="result.id">
-              {{ result.title }}
-            </li>
-          </ul>
-        </div>
         <ul class="navbar-nav">
           <li class="nav-item dropdown">
-            <a class="nav-link dropdown-toggle" href="#" id="navbarDropdownMenuLink" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                {{ userProfile.displayName }}
-              </a>
-              <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="navbarDropdownMenuLink">
+            <a
+              class="nav-link dropdown-toggle"
+              href="#"
+              id="navbarDropdownMenuLink"
+              role="button"
+              data-bs-toggle="dropdown"
+              aria-expanded="false"
+            >
+              {{ userProfile.displayName }}
+            </a>
+            <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="navbarDropdownMenuLink">
               <li><a class="dropdown-item" href="/auth/signout">Sign out</a></li>
             </ul>
           </li>
         </ul>
       </div>
-      <SLAProgressModal ref="slaModal"/>
+      <SLAProgressModal ref="slaModal" />
     </div>
   </nav>
 </template>
 
+
 <script>
 import 'bootstrap/dist/js/bootstrap.bundle.js';
 import SLAProgressModal from './SLAComp.vue';
-import { debounce } from 'lodash';
 import { mapActions, mapState } from 'vuex';
+
 export default {
   name: 'NavBarComponent',
   components: {
@@ -58,23 +73,46 @@ export default {
   data() {
     return {
       userProfile: { displayName: localStorage.getItem('user') },
-      searchQuery: ''
+      searchTerm: ''
     };
   },
   computed: {
     ...mapState(['searchResults']),
-  },
-  methods: {
-    ...mapActions(['performSearch']),
-    debounceSearch: debounce(function () {
-      this.performSearch(this.searchQuery);
-    }, 300),
-    openSlaModal() {
-      this.$refs.slaModal.openSlaModal();
+    searchResults() {
+      return this.$store.state.searchResults;
     }
   },
+  methods: {
+    ...mapActions(['performSearch', 'fetchPageDetails']),
+    loadPage(pageId) {
+      this.fetchPageDetails(pageId);
+      this.clearSearchResults(); // Hide search results after selection
+    },
+    performSearch() {
+      this.$store.dispatch('performSearch', this.searchTerm);
+    },
+    openSlaModal() {
+      this.$refs.slaModal.openSlaModal();
+    },
+    clearSearchResults() {
+      this.$store.commit('setSearchResults', []); // Clear search results
+    },
+    handleClickOutside(event) {
+      if (!this.$el.contains(event.target)) {
+        this.clearSearchResults();
+      }
+    }
+  },
+  mounted() {
+    document.addEventListener('click', this.handleClickOutside);
+  },
+  beforeUnmount() {
+    document.removeEventListener('click', this.handleClickOutside);
+  }
 };
 </script>
+
+
 
 <style scoped>
 nav {
@@ -95,33 +133,53 @@ li a {
   display: block;
   text-align: center;
   padding: 14px 16px;
-  text-decoration: white 
+  text-decoration: none;
 }
 
 li a:hover {
-  background-color: var(--secondary-colo) !important;
+  background-color: var(--secondary-color) !important;
 }
 
-.dropdown-items:hover {
-  background-color: var(--secondary-colo) !important;
+.dropdown-item:hover {
+  background-color: var(--secondary-color) !important;
 }
 
 .navbar-nav img {
   vertical-align: middle;
   border-radius: 50%;
 }
-.search-results ul {
+
+.search-results {
   position: absolute;
-  background: white;
-  list-style-type: none;
+  top: 100%;
+  left: 0;
   width: 100%;
+  background: white;
+  border: 1px solid #ccc;
   z-index: 1000;
 }
+
+.search-results ul {
+  list-style-type: none;
+  padding: 0;
+  margin: 0;
+}
+
 .search-results li {
   padding: 10px;
   border-bottom: 1px solid #ccc;
 }
+
 .search-results li:last-child {
   border-bottom: none;
+}
+
+.search-results a {
+  color: #333;
+  text-decoration: none;
+}
+
+.search-results a:hover {
+  background-color: #f0f0f0;
 }
 </style>

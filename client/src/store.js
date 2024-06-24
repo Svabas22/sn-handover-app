@@ -66,7 +66,7 @@ const store = createStore({
     },
     setLastUpdateSource(state, source) {
       state.lastUpdateSource = source;
-    },
+    }
   },
   actions: {
     async fetchPages({ commit, dispatch }) {
@@ -89,15 +89,12 @@ const store = createStore({
       }
     },
     async performSearch({ commit }, searchTerm) {
-      console.log("Performing search for:", searchTerm); // Debug: Log the search term
       try {
         const response = await fetch(`/api/search?q=${encodeURIComponent(searchTerm)}`);
-        console.log("Response received:", response); // Debug: Log the response
         if (!response.ok) {
           throw new Error(`HTTP error! Status: ${response.status}`);
         }
         const results = await response.json();
-        console.log("Search results:", results); // Debug: Log the search results
         commit('setSearchResults', results);
       } catch (error) {
         console.error('Search error:', error);

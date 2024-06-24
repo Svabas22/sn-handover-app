@@ -144,20 +144,27 @@ app.get('/api/search', async (req, res) => {
   if (!container) {
     return res.status(500).json({ error: 'Cosmos DB container is not initialized' });
   }
+
   try {
-    // This query assumes `incNumber` can be in any client and any incident.
     const querySpec = {
-      query: `SELECT c.id, c.title, c.clients
-              FROM c
-              JOIN client IN c.clients
-              JOIN incident IN client.incidents
-              WHERE incident.incNumber = @searchQuery`,
+      query: `
+        SELECT c.id, c.title
+        FROM c
+        WHERE 
+          EXISTS (SELECT VALUE i FROM i IN c.clients.Client1.incidents WHERE i.incNumber = @searchQuery) OR
+          EXISTS (SELECT VALUE i FROM i IN c.clients.Client2.incidents WHERE i.incNumber = @searchQuery) OR
+          EXISTS (SELECT VALUE chg FROM chg IN c.clients.Client1.changes WHERE chg.chgNumber = @searchQuery) OR
+          EXISTS (SELECT VALUE chg FROM chg IN c.clients.Client2.changes WHERE chg.chgNumber = @searchQuery) OR
+          EXISTS (SELECT VALUE prb FROM prb IN c.clients.Client1.problems WHERE prb.prbNumber = @searchQuery) OR
+          EXISTS (SELECT VALUE prb FROM prb IN c.clients.Client2.problems WHERE prb.prbNumber = @searchQuery) OR
+          EXISTS (SELECT VALUE sr FROM sr IN c.clients.Client1.serviceRequests WHERE sr.ritmNumber = @searchQuery) OR
+          EXISTS (SELECT VALUE sr FROM sr IN c.clients.Client2.serviceRequests WHERE sr.ritmNumber = @searchQuery)
+      `,
       parameters: [{ name: "@searchQuery", value: searchQuery }]
     };
 
     const { resources: items } = await container.items.query(querySpec).fetchAll();
     if (items.length > 0) {
-      console.log("Search results:", items);  // Log to verify results
       res.status(200).json(items);
     } else {
       res.status(404).json({ message: 'No results found' });
