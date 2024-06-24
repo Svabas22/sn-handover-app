@@ -87,8 +87,8 @@ export default {
     calculateSLAProgress(incident) {
       const priorities = {
         'P1 - Critical': 3 * 60,
-        'P2 - High': 8 * 60,
-        'P3 - Moderate': 24 * 60,
+        'P2 - high': 8 * 60,
+        'P3 - moderate': 24 * 60,
         'P4 - Low': 40 * 60
       };
       const openDate = new Date(incident.dateOpened);
