@@ -9,7 +9,6 @@ const path = require('path');
 const session = require('express-session');
 const http = require('http');
 const { Server } = require("socket.io");
-const { useAzureSocketIO } = require("@azure/web-pubsub-socket.io");
 const cookieParser = require('cookie-parser');
 const morgan = require('morgan');
 const redis = require('redis');
@@ -24,39 +23,14 @@ const isAuthenticated = require('./auth/isAuthenticated');
 
 const app = express();
 const server = http.createServer(app);
-const io = new Server(server);
-useAzureSocketIO(io, {
-  hub: "mainhub", // The hub name can be any valid string.
-  connectionString: process.argv[2] || process.env.PUBSUB_STRING
-});
-// const io = socketIo(server, {
-//   cors: {
-//     origin: '*', // Allow all origins for simplicity
-//     methods: ["GET", "POST"]
-//   }
-// });
-
-io.on("connection", (socket) => {
-  // Sends a message to the client
-  socket.emit("hello", "world");
-
-  // Receives a message from the client
-  socket.on("howdy", (arg) => {
-      console.log(arg);   // Prints "stranger"
-  })
+const io = new Server(server, {
+  cors: {
+    origin: ['http://localhost:3000', 'https://sn-handover-app.azurewebsites.net'],
+    methods: ['GET', 'POST'],
+    credentials: true
+  }
 });
 
-const corsOptions = {
-  origin: ['http://localhost:3000', 'https://sn-handover-app.azurewebsites.net'],
-  methods: ['GET', 'POST', 'PUT', 'DELETE'],
-  allowedHeaders: ["Origin","X-Requested-With","Content-Type","Accept","Authorization"],
-  credentials: true
-};
-
-app.use(cors(corsOptions));
-app.use(express.json());
-app.use(cookieParser());
-app.use(express.urlencoded({ extended: false }));
 
 const redisClient = redis.createClient({
   url: process.env.REDIS_KEY,
@@ -64,15 +38,42 @@ const redisClient = redis.createClient({
     rejectUnauthorized: process.env.ENVR === 'production'
   }
 });
-redisClient.connect().catch(console.error);
 
+redisClient.connect().catch(console.error);
 redisClient.on('connect', () => {
   console.log('Redis connected');
 });
-
 redisClient.on('error', (err) => {
   console.log('Redis error: ', err);
 });
+
+// Redis client for subscribing to channels
+const redisSubscriber = redisClient.duplicate();
+
+async function initRedisSubscriber() {
+  await redisSubscriber.connect();
+
+  redisSubscriber.subscribe('page_updates');
+  redisSubscriber.on('message', (channel, message) => {
+    if (channel === 'page_updates') {
+      console.log(`Received message from Redis on channel ${channel}: ${message}`);
+      io.emit('pageUpdated', JSON.parse(message));
+    }
+  });
+}
+
+initRedisSubscriber().catch(console.error);
+
+app.use(cors({
+  origin: ['http://localhost:3000', 'https://sn-handover-app.azurewebsites.net'],
+  methods: ['GET', 'POST', 'PUT', 'DELETE'],
+  allowedHeaders: ["Origin", "X-Requested-With", "Content-Type", "Accept", "Authorization"],
+  credentials: true
+}));
+
+app.use(express.json());
+app.use(cookieParser());
+app.use(express.urlencoded({ extended: false }));
 
 app.use(session({
   store: new RedisStore({ client: redisClient }),
@@ -85,10 +86,13 @@ app.use(session({
   }
 }));
 
+
+
 app.use(express.static(path.join(__dirname, '../client/dist')));
 app.use('/', indexRouter);
 app.use('/users', usersRouter);
 app.use('/auth', authRouter);
+
 
 const endpoint = process.env.COSMOS_DB_ENDPOINT;
 const key = process.env.COSMOS_DB_KEY;
@@ -116,7 +120,7 @@ app.post('/api/real-time-updates', (req, res) => {
   const changes = req.body;
   console.log('Received real-time updates:', changes); // Add logging
   changes.forEach(change => {
-    io.emit('pageUpdated', change);
+    redisClient.publish('page_updates', JSON.stringify(change));
   });
   res.status(200).send('Changes broadcasted.');
 });
@@ -130,12 +134,12 @@ io.on('connection', (socket) => {
 
   socket.on('editPage', (data) => {
     console.log('Edit page event received:', data);
-    io.emit('pageUpdated', data);
+    redisClient.publish('page_updates', JSON.stringify(data));
   });
 
   socket.on('deletePage', (data) => {
     console.log('Delete page event received:', data);
-    io.emit('pageDeleted', data);
+    redisClient.publish('page_updates', JSON.stringify(data));
   });
 });
 
