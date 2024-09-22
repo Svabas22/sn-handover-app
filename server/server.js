@@ -25,12 +25,14 @@ const app = express();
 const server = http.createServer(app);
 const io = new Server(server, {
   cors: {
-    origin: ['http://localhost:3000', 'https://sn-handover-app.azurewebsites.net'],
+    origin: ['https://sn-handover-app.azurewebsites.net'],
     methods: ['GET', 'POST'],
     credentials: true
-  }
+  },
+  transports: ['websocket'], // Ensure WebSocket is prioritized
+  allowEIO3: true,  // Allow Engine.IO version 3 for compatibility
+  debug: true      // Enable debug mode for more logging
 });
-
 
 const redisClient = redis.createClient({
   url: process.env.REDIS_KEY,
