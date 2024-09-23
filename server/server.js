@@ -118,14 +118,7 @@ initializeCosmosDB();
 
 app.set('trust proxy', 1);
 
-app.post('/api/real-time-updates', (req, res) => {
-  const changes = req.body;
-  console.log('Received real-time updates:', changes); // Add logging
-  changes.forEach(change => {
-    redisClient.publish('page_updates', JSON.stringify(change));
-  });
-  res.status(200).send('Changes broadcasted.');
-});
+
 
 io.on('connection', (socket) => {
   console.log('New client connected');
@@ -143,6 +136,15 @@ io.on('connection', (socket) => {
     console.log('Delete page event received:', data);
     redisClient.publish('page_updates', JSON.stringify(data));
   });
+});
+
+app.post('/api/real-time-updates', (req, res) => {
+  const changes = req.body;
+  console.log('Received real-time updates:', changes); // Add logging
+  changes.forEach(change => {
+    redisClient.publish('page_updates', JSON.stringify(change));
+  });
+  res.status(200).send('Changes broadcasted.');
 });
 
 app.get('/api/search', async (req, res) => {
