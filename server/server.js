@@ -55,12 +55,9 @@ const redisSubscriber = redisClient.duplicate();
 async function initRedisSubscriber() {
   await redisSubscriber.connect();
 
-  redisSubscriber.subscribe('page_updates');
-  redisSubscriber.on('message', (channel, message) => {
-    if (channel === 'page_updates') {
-      console.log(`Received message from Redis on channel ${channel}: ${message}`);
-      io.emit('pageUpdated', JSON.parse(message));
-    }
+  redisSubscriber.subscribe('page_updates', (message, channel) => {
+    console.log(`Received message from Redis on channel ${channel}: ${message}`);
+    io.emit('pageUpdated', JSON.parse(message));
   });
 }
 
@@ -179,7 +176,7 @@ app.get('/api/search', async (req, res) => {
     }
   } catch (error) {
     console.error('Failed to fetch search results:', error);
-    res.status(500).json({ error: error.message });
+    //res.status(500).json({ error: error.message });
   }
 });
 

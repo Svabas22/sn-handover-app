@@ -97,8 +97,8 @@ const store = createStore({
         const results = await response.json();
         commit('setSearchResults', results);
       } catch (error) {
-        console.error('Search error:', error);
-        commit('addToast', { message: `Search error: ${error.message}`, type: 'danger' });
+        console.error('Search error: Recotd not found:');
+        commit('addToast', { message: `Search error: Record not found`, type: 'danger' });
       }
     },
     async fetchPageDetails({ commit }, pageId) {
