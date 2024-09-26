@@ -234,6 +234,7 @@ app.post('/api/copy-handover', async (req, res) => {
       newDocument.title = `Handover ${newDocument.date} - ${today.getHours() >= 3 && today.getHours() < 15 ? 'Day' : 'Night'}`;
 
       const { resource: createdItem } = await container.items.create(newDocument);
+      socket.broadcast.emit('pageCreated', newPage);
       res.status(200).json(createdItem);
       io.emit('pageCreated', createdItem);
     } else {

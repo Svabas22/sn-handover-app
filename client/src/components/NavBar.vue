@@ -83,13 +83,13 @@ export default {
     }
   },
   methods: {
-    ...mapActions(['performSearch', 'fetchPageDetails']),
+    ...mapActions(['debouncedPerformSearch', 'fetchPageDetails']),
     loadPage(pageId) {
       this.fetchPageDetails(pageId);
       this.clearSearchResults(); // Hide search results after selection
     },
     performSearch() {
-      this.$store.dispatch('performSearch', this.searchTerm);
+      this.$store.dispatch('debouncedPerformSearch', this.searchTerm);
     },
     openSlaModal() {
       this.$refs.slaModal.openSlaModal();

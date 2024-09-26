@@ -88,7 +88,7 @@ const store = createStore({
         commit('addToast', { message: `Fetch pages error: ${error.message}`, type: 'danger' });
       }
     },
-    async performSearch({ commit }, searchTerm) {
+    debouncedPerformSearch: debounce(async function ({ commit }, searchTerm) {
       try {
         const response = await fetch(`/api/search?q=${encodeURIComponent(searchTerm)}`);
         if (!response.ok) {
@@ -97,10 +97,10 @@ const store = createStore({
         const results = await response.json();
         commit('setSearchResults', results);
       } catch (error) {
-        console.error('Search error: Recotd not found:');
+        console.error('Search error: Record not found');
         commit('addToast', { message: `Search error: Record not found`, type: 'danger' });
       }
-    },
+    }, 200),
     async fetchPageDetails({ commit }, pageId) {
       try {
         const response = await fetch(`/api/records/${pageId}`);
@@ -157,15 +157,18 @@ const store = createStore({
     async copyHandover({ commit }) {
       try {
         const response = await fetch('/api/copy-handover', { method: 'POST' });
-        const newPage = await response.json();
         if (!response.ok) {
           throw new Error(`HTTP error! status: ${response.status}`);
         }
-        //commit('addPage', newPage);
-        commit('setCurrentPage', newPage);
-        
+        const newPage = await response.json();
+    
+        commit('setCurrentPage', newPage); // Redirect this user to the new page
+
+        socket.emit('pageCreated', newPage);
+    
+        commit('addToast', { message: 'New handover created successfully.', type: 'success' });
+    
       } catch (error) {
-        console.error('Error creating handover from template:', error);
         commit('addToast', { message: `Copy handover error: ${error.message}`, type: 'danger' });
       }
     },
@@ -267,8 +270,10 @@ const store = createStore({
   },
 });
 socket.removeAllListeners();
+let socketId = null;
 socket.on('connect', () => {
   console.log('Socket.io connected');
+  socketId = socket.id;
 });
 
 socket.on('disconnect', () => {
@@ -276,16 +281,18 @@ socket.on('disconnect', () => {
   socket.connect(); // Attempt reconnect
 });
 
-
+// Global toast notification for page creation
 socket.on('pageCreated', (data) => {
   console.log('Page created event received:', data);
-  const pageExists = store.state.pages.some(page => page.id === data.id);
-  if (!pageExists) {
-    store.commit('addPage', data);
-    store.commit('addToast', { message: 'Handover copied successfully.', type: 'success' });
-  }
-});
 
+  if (data.createdBy !== socketId) {
+    store.commit('addToast', { message: 'A new handover has been created.', type: 'success' });
+  } else {
+    console.log('This user created the page.');
+  }
+  store.commit('addPage', data);
+});
+// Global toast notification for page updates
 socket.on('pageUpdated', (data) => {
   console.log('Page updated event received:', data);
   if (store.state.lastUpdateSource !== 'client') { // Only update if not from client
@@ -298,14 +305,11 @@ socket.on('pageUpdated', (data) => {
   store.commit('setLastUpdateSource', 'server'); // Reset to server after handling
 });
 
+// Global toast notification for page deletion
 socket.on('pageDeleted', (data) => {
   console.log('Page deleted event received:', data);
   store.commit('deletePage', data.id);
-  if (store.state.currentPage && store.state.currentPage.id === data.id) {
-    store.commit('setCurrentPage', null);
-    store.commit('addToast', { message: `Page ${store.state.currentPage.title} deleted`, type: 'danger' });
-  }
-  store.commit('setLastUpdateSource', 'server'); // Reset to server after handling
+  store.commit('addToast', { message: `Page "${data.title}" deleted successfully.`, type: 'danger' });
 });
 
 export default store;

@@ -36,6 +36,7 @@ export default {
     return {
       searchQuery: '',
       userProfile: { role: localStorage.getItem('roles') },
+      socketId: null,
     };
   },
   computed: {
@@ -57,6 +58,7 @@ export default {
     createNewHandoverWithData() {
       this.copyHandover().then((newPage) => {
         this.addToast({ message: 'New handover created successfully.', type: 'success' });
+        this.$socket.emit('createPage', { ...newPage, createdBy: this.socketId });
         this.setCurrentPage(newPage);
       }).catch((error) => {
         this.addToast({ message: `Error: ${error.message}`, type: 'danger' });
@@ -66,6 +68,9 @@ export default {
       this.createHandoverTemplate()
       .then((newPage) => {
         this.addToast({ message: 'New template created successfully.', type: 'success' });
+        
+        this.$socket.emit('createPage', { ...newPage, createdBy: this.socketId });
+
         this.setCurrentPage(newPage);
       })
       .catch(error => {
@@ -75,15 +80,23 @@ export default {
   },
   created() {
     this.fetchPages();
+    this.$socket.on('connect', () => {
+      this.socketId = this.$socket.id;
+    });
 
     this.$socket.on('pageCreated', (newPage) => {
-      //this.$store.commit('addPage', newPage);
-      this.setCurrentPage(newPage);
+      if (newPage.createdBy !== this.socketId) {
+        // If the user did not create the page, just show a toast
+        this.addToast({ message: 'A new handover page was created.', type: 'success' });
+      } else {
+        // If the current user created the page, set it as currentPage
+        this.setCurrentPage(newPage);
+      }
     });
   },
-  // beforeUnmount() {
-  //   this.$socket.off('pageCreated');
-  // }
+  beforeUnmount() {
+    this.$socket.off('pageCreated');
+  }
 }
 </script>
 

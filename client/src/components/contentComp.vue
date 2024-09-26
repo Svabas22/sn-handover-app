@@ -603,7 +603,7 @@ export default {
 
       try {
         await this.debouncedUpdatePageDetails({ page: this.currentPage, source: this.$socket.id });
-        this.$socket.emit('editPage', this.currentPage);
+        //this.$socket.emit('editPage', this.currentPage);
         this.resetNewIncident();
         this.$router.push({ name: 'HomePage' });
       } catch (error) {
@@ -635,7 +635,7 @@ export default {
 
       try {
         await this.debouncedUpdatePageDetails({ page: this.currentPage, source: this.$socket.id });
-        this.$socket.emit('editPage', this.currentPage);
+        //this.$socket.emit('editPage', this.currentPage);
         this.resetNewProblem();
         this.$router.push({ name: 'HomePage' });
       } catch (error) {
@@ -666,7 +666,7 @@ export default {
 
       try {
         await this.debouncedUpdatePageDetails({ page: this.currentPage, source: this.$socket.id });
-        this.$socket.emit('editPage', this.currentPage);
+        //this.$socket.emit('editPage', this.currentPage);
         this.resetNewChange();
       } catch (error) {
         console.error('Error saving change:', error);
@@ -695,7 +695,7 @@ export default {
 
       try {
         await this.debouncedUpdatePageDetails({ page: this.currentPage, source: this.$socket.id });
-        this.$socket.emit('editPage', this.currentPage);
+        //this.$socket.emit('editPage', this.currentPage);
         this.resetNewRequest();
       } catch (error) {
         console.error('Error saving service request:', error);
