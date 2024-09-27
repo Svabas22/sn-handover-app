@@ -299,9 +299,10 @@ socket.on('pageUpdated', (data) => {
     store.commit('updatePage', data);
     if (store.state.currentPage && store.state.currentPage.id === data.id) {
       store.commit('setCurrentPage', data);
-      store.commit('addToast', { message: `Page ${store.state.currentPage.title} updated`, type: 'success' });
+      
     }
   }
+  store.commit('addToast', { message: `Page ${data.title} updated`, type: 'success' });
   store.commit('setLastUpdateSource', 'server'); // Reset to server after handling
 });
 
