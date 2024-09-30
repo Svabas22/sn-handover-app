@@ -12,6 +12,7 @@ const { Server } = require("socket.io");
 const cookieParser = require('cookie-parser');
 const morgan = require('morgan');
 const redis = require('redis');
+let usersOnPage = {};
 const RedisStore = require('connect-redis').default;
 const { CosmosClient } = require("@azure/cosmos");
 
@@ -119,19 +120,45 @@ app.set('trust proxy', 1);
 
 io.on('connection', (socket) => {
   console.log('New client connected');
-  
-  socket.on('disconnect', () => {
-    console.log('Client disconnected');
+  socket.on('viewPage', ({ pageId }) => {
+    if (!usersOnPage[pageId]) {
+      usersOnPage[pageId] = [];
+    }
+    usersOnPage[pageId].push({ socketId: socket.id, pageId });
+
+    // Notify all clients about users on the page
+    io.emit('usersOnPage', Object.values(usersOnPage).flat());
   });
+  socket.on('leavePage', ({ pageId }) => {
+    if (usersOnPage[pageId]) {
+      usersOnPage[pageId] = usersOnPage[pageId].filter(user => user.socketId !== socket.id);
+      if (usersOnPage[pageId].length === 0) {
+        delete usersOnPage[pageId];
+      }
+    }
+    io.emit('usersOnPage', Object.values(usersOnPage).flat());
+  });
+
 
   socket.on('editPage', (data) => {
     console.log('Edit page event received:', data);
     redisClient.publish('page_updates', JSON.stringify(data));
   });
 
-  socket.on('deletePage', (data) => {
-    console.log('Delete page event received:', data);
-    redisClient.publish('page_updates', JSON.stringify(data));
+  socket.on('deletePage', ({ id, title }) => {
+    console.log(`Page deleted: ${id} - ${title}`);
+    io.emit('pageDeleted', { id, title });
+    delete usersOnPage[id]; // Clean up users tracking
+  });
+  socket.on('disconnect', () => {
+    console.log('Client disconnected:', socket.id);
+    Object.keys(usersOnPage).forEach(pageId => {
+      usersOnPage[pageId] = usersOnPage[pageId].filter(user => user.socketId !== socket.id);
+      if (usersOnPage[pageId].length === 0) {
+        delete usersOnPage[pageId];
+      }
+    });
+    io.emit('usersOnPage', Object.values(usersOnPage).flat());
   });
 });
 
@@ -234,7 +261,7 @@ app.post('/api/copy-handover', async (req, res) => {
       newDocument.title = `Handover ${newDocument.date} - ${today.getHours() >= 3 && today.getHours() < 15 ? 'Day' : 'Night'}`;
 
       const { resource: createdItem } = await container.items.create(newDocument);
-      socket.broadcast.emit('pageCreated', newPage);
+      //socket.broadcast.emit('pageCreated', newPage);
       res.status(200).json(createdItem);
       io.emit('pageCreated', createdItem);
     } else {
@@ -308,20 +335,20 @@ app.put('/api/records/:id', async (req, res) => {
 
 app.delete('/api/records/:id', async (req, res) => {
   const pageId = req.params.id;
-  const partitionKey = req.body.pageId;
+  const partitionKey = req.body.pageId;  // Use 'id' as the partition key
   try {
     if (!container) {
       throw new Error('Cosmos DB container is not initialized');
     }
-    const { resource: result } = await container.item(pageId, partitionKey).delete();
-    if (result) {
-      res.status(204).send();
-      io.emit('pageDeleted', { id: pageId });
-    }
+    await container.item(pageId, partitionKey).delete();
+    res.status(204).send(); // Send a 204 No Content response
+    io.emit('pageDeleted', { id: pageId });
   } catch (error) {
+    console.error('Error deleting page:', error);
     res.status(500).json({ error: "An internal error occurred while deleting the record." });
   }
 });
+
 
 
 // Shift management

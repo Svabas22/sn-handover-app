@@ -42,34 +42,42 @@ export default {
   computed: {
     ...mapState(['pages', 'currentPage']),
     filteredPages() {
-      return this.pages.filter(page => page.title.toLowerCase().includes(this.searchQuery.toLowerCase()));
+      // Assuming your pages have a 'date' property and it's in a format that can be compared
+      const sortedPages = [...this.pages].sort((a, b) => new Date(b.date) - new Date(a.date));
+
+      // Filter based on search query
+      if (this.searchQuery) {
+        return sortedPages.filter(page => 
+          page.title.toLowerCase().includes(this.searchQuery.toLowerCase())
+        );
+      }
+
+      return sortedPages;
     },
     isEngineer() {
       return this.userProfile.role === 'Engineer';
     }
   },
   methods: {
-    ...mapActions(['fetchPages', 'fetchPageDetails', 'createHandoverTemplate', 'copyHandover', 'addToast']),
+    ...mapActions(['fetchPages', 'fetchPageDetails', 'debouncedCreateHandoverTemplate', 'debouncedCopyHandover', 'addToast']),
     ...mapMutations(['setCurrentPage']),
     loadPage(pageId) {
       this.fetchPageDetails(pageId);
       console.log(this.userProfile.role);
     },
     createNewHandoverWithData() {
-      this.copyHandover().then((newPage) => {
-        this.addToast({ message: 'New handover created successfully.', type: 'success' });
-        this.$socket.emit('createPage', { ...newPage, createdBy: this.socketId });
+      this.debouncedCopyHandover().then((newPage) => {
+        //this.$socket.emit('createPage', { ...newPage, createdBy: this.socketId });
         this.setCurrentPage(newPage);
       }).catch((error) => {
         this.addToast({ message: `Error: ${error.message}`, type: 'danger' });
       });
     },
     createNewTemplateHandover() {
-      this.createHandoverTemplate()
+      this.debouncedCreateHandoverTemplate()
       .then((newPage) => {
-        this.addToast({ message: 'New template created successfully.', type: 'success' });
         
-        this.$socket.emit('createPage', { ...newPage, createdBy: this.socketId });
+        //this.$socket.emit('createPage', { ...newPage, createdBy: this.socketId });
 
         this.setCurrentPage(newPage);
       })
@@ -93,9 +101,15 @@ export default {
         this.setCurrentPage(newPage);
       }
     });
+    this.$socket.on('pageDeleted', (deletedPage) => {
+      this.$store.commit('deletePage', deletedPage.id);
+      this.addToast({ message: `Page "${deletedPage.title}" has been deleted.`, type: 'danger' });
+    });
+
   },
   beforeUnmount() {
     this.$socket.off('pageCreated');
+    this.$socket.off('pageDeleted');
   }
 }
 </script>

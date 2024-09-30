@@ -12,6 +12,7 @@ const store = createStore({
     searchResults: [],
     currentShift: null,
     incidents: [],
+    usersOnPage: [],
     lastUpdateSource: 'server', // Track the source of the last update
   },
   mutations: {
@@ -54,9 +55,8 @@ const store = createStore({
         state.toasts = state.toasts.filter(t => t.id !== id);
       }, 3000);
     },
-    deletePage(state, pageId) {
-      state.pages = state.pages.filter(p => p.id !== pageId);
-      state.currentPage = null;
+    setUsersOnPage(state, users) {
+      state.usersOnPage = users; // Update the list of users viewing the page
     },
     setSearchResults(state, results) {
       state.searchResults = results;
@@ -66,9 +66,36 @@ const store = createStore({
     },
     setLastUpdateSource(state, source) {
       state.lastUpdateSource = source;
-    }
+    },
+    deletePage(state, pageId) {
+      state.pages = state.pages.filter(p => p.id !== pageId);
+      if (state.currentPage && state.currentPage.id === pageId) {
+        state.currentPage = null;
+      }
+    },
   },
   actions: {
+    async deletePage({ commit }, { pageId }) {
+      try {
+        const response = await fetch(`/api/records/${pageId}`, {
+          method: 'DELETE',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        });
+  
+        if (response.ok) {
+          commit('deletePage', pageId);  // Update Vuex state immediately
+          
+        } else {
+          const errorText = await response.text();
+          throw new Error(`Failed to delete page: ${errorText}`);
+        }
+      } catch (error) {
+        console.error('Error deleting the page:', error);
+        throw error;
+      }
+    },
     async fetchPages({ commit, dispatch }) {
       const token = localStorage.getItem('accessToken');
       console.log("Token:", token);
@@ -154,50 +181,34 @@ const store = createStore({
         commit('addToast', { message: `Update page error: ${error.message}`, type: 'danger' });
       }
     }, 200),
-    async copyHandover({ commit }) {
+    debouncedCopyHandover: debounce(async function ({ commit }) {
       try {
         const response = await fetch('/api/copy-handover', { method: 'POST' });
+        const newPage = await response.json();
         if (!response.ok) {
           throw new Error(`HTTP error! status: ${response.status}`);
         }
-        const newPage = await response.json();
-    
-        commit('setCurrentPage', newPage); // Redirect this user to the new page
-
-        socket.emit('pageCreated', newPage);
-    
-        commit('addToast', { message: 'New handover created successfully.', type: 'success' });
-    
+        //commit('addPage', newPage);
+        commit('setCurrentPage', newPage);
+        
       } catch (error) {
+        console.error('Error creating handover from template:', error);
         commit('addToast', { message: `Copy handover error: ${error.message}`, type: 'danger' });
       }
-    },
-    async createHandoverTemplate({ commit }) {
+    }, 200),
+
+    debouncedCreateHandoverTemplate: debounce(async function ({ commit }) {
       try {
         const response = await fetch('/api/copy-template', { method: 'POST' });
         const newPage = await response.json();
-        commit('addPage', newPage);
+        //commit('addPage', newPage);
         commit('setCurrentPage', newPage);
-        commit('addToast', { message: 'New template created successfully.', type: 'success' });
+        //commit('addToast', { message: 'New template created successfully.', type: 'success' });
       } catch (error) {
         console.error('Error creating handover from template:', error);
         commit('addToast', { message: `Create template error: ${error.message}`, type: 'danger' });
       }
-    },
-    async deletePage({ commit, dispatch }, pageId) {
-      try {
-        const response = await fetch(`/api/records/${pageId}`, { method: 'DELETE' });
-        if (!response.ok) {
-          throw new Error(`Failed to delete page: ${response.statusText}`);
-        }
-        commit('deletePage', pageId);
-        commit('addToast', { message: 'Page deleted successfully.', type: 'success' });
-        dispatch('fetchPages'); // Refetch the list of pages to update the state
-      } catch (error) {
-        console.error('Error deleting page:', error);
-        commit('addToast', { message: `Delete page error: ${error.message}`, type: 'danger' });
-      }
-    },
+    }, 200),
     // shift management
     async fetchShifts({ commit }) {
       try {
@@ -270,10 +281,10 @@ const store = createStore({
   },
 });
 socket.removeAllListeners();
-let socketId = null;
+//let socketId = null;
 socket.on('connect', () => {
   console.log('Socket.io connected');
-  socketId = socket.id;
+  //socketId = socket.id;
 });
 
 socket.on('disconnect', () => {
@@ -284,13 +295,11 @@ socket.on('disconnect', () => {
 // Global toast notification for page creation
 socket.on('pageCreated', (data) => {
   console.log('Page created event received:', data);
-
-  if (data.createdBy !== socketId) {
-    store.commit('addToast', { message: 'A new handover has been created.', type: 'success' });
-  } else {
-    console.log('This user created the page.');
+  const pageExists = store.state.pages.some(page => page.id === data.id);
+  if (!pageExists) {
+    store.commit('addPage', data);
+    store.commit('addToast', { message: 'Handover copied successfully.', type: 'success' });
   }
-  store.commit('addPage', data);
 });
 // Global toast notification for page updates
 socket.on('pageUpdated', (data) => {
@@ -306,11 +315,12 @@ socket.on('pageUpdated', (data) => {
   store.commit('setLastUpdateSource', 'server'); // Reset to server after handling
 });
 
-// Global toast notification for page deletion
 socket.on('pageDeleted', (data) => {
   console.log('Page deleted event received:', data);
-  store.commit('deletePage', data.id);
   store.commit('addToast', { message: `Page "${data.title}" deleted successfully.`, type: 'danger' });
+  store.commit('deletePage', data.id);
+  
 });
+
 
 export default store;
