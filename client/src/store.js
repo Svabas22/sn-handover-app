@@ -2,6 +2,9 @@ import { createStore } from 'vuex';
 import { debounce } from 'lodash';
 import socket from './socket';
 
+let currentListener = null;
+let previousPageId = null;
+
 const store = createStore({
   state: {
     pages: [],
@@ -56,7 +59,10 @@ const store = createStore({
       }, 3000);
     },
     setUsersOnPage(state, users) {
-      state.usersOnPage = users; // Update the list of users viewing the page
+      if (JSON.stringify(state.usersOnPage) !== JSON.stringify(users)) {
+        console.log('Setting users on page:', users);
+        state.usersOnPage = users;
+      }
     },
     setSearchResults(state, results) {
       state.searchResults = results;
@@ -97,8 +103,7 @@ const store = createStore({
       }
     },
     async fetchPages({ commit, dispatch }) {
-      const token = localStorage.getItem('accessToken');
-      console.log("Token:", token);
+
       try {
         console.log(localStorage.getItem('user'));
         const response = await fetch('/api/records');
@@ -129,6 +134,11 @@ const store = createStore({
       }
     }, 200),
     async fetchPageDetails({ commit }, pageId) {
+
+      if (previousPageId) {
+        socket.emit('leavePage', { pageId: previousPageId });
+      }
+
       try {
         const response = await fetch(`/api/records/${pageId}`);
         if (!response.ok) {
@@ -139,6 +149,25 @@ const store = createStore({
           const data = JSON.parse(text);
           console.log("Received response:", data);
           commit('setCurrentPage', data);
+
+          socket.emit('viewPage', { pageId: data.id });
+          previousPageId = data.id;
+
+          // Remove the previous listener before adding a new one
+          if (currentListener) {
+            console.log('Removing previous usersOnPage listener');
+            socket.off('usersOnPage', currentListener);
+          }
+
+          // Attach a new listener
+          currentListener = (users) => {
+            console.log('Users on page event received:', users);
+            commit('setUsersOnPage', users);
+          };
+          
+
+          socket.on('usersOnPage', currentListener);
+
         } catch (parseError) {
           console.error('Error parsing JSON:', parseError);
           commit('addToast', { message: `JSON parse error: ${parseError.message}`, type: 'danger' });
@@ -280,16 +309,21 @@ const store = createStore({
     }
   },
 });
-socket.removeAllListeners();
+
+
 //let socketId = null;
 socket.on('connect', () => {
   console.log('Socket.io connected');
-  //socketId = socket.id;
 });
 
 socket.on('disconnect', () => {
   console.log('Socket.io disconnected');
   socket.connect(); // Attempt reconnect
+});
+
+//socket.removeAllListeners('usersOnPage');
+socket.on('usersOnPage', (users) => {
+  store.commit('setUsersOnPage', users);
 });
 
 // Global toast notification for page creation
@@ -315,12 +349,17 @@ socket.on('pageUpdated', (data) => {
   store.commit('setLastUpdateSource', 'server'); // Reset to server after handling
 });
 
+socket.removeAllListeners('pageDeleted');
 socket.on('pageDeleted', (data) => {
   console.log('Page deleted event received:', data);
-  store.commit('addToast', { message: `Page "${data.title}" deleted successfully.`, type: 'danger' });
+  if (data.title && data.title !== 'undefined') {
+    store.commit('addToast', { message: `Page "${data.title}" deleted successfully.`, type: 'danger' });
+  }
   store.commit('deletePage', data.id);
   
 });
+
+
 
 
 export default store;

@@ -551,7 +551,7 @@ export default {
     };
   },
   computed: {
-    ...mapState(['currentPage', 'pages', 'shifts', 'currentShift', 'toasts']),
+    ...mapState(['currentPage', 'pages', 'shifts', 'currentShift', 'toasts', 'usersOnPage']),
     isEngineer() {
       return this.userProfile.role === 'Engineer';
     },
@@ -571,7 +571,6 @@ export default {
       if (this.editMode) {
         if (this.hasChanges()) {
           this.debouncedUpdatePageDetails({ page: this.currentPage, source: this.$socket.id });
-          //this.$socket.emit('editPage', this.currentPage);
         }
       } else {
         this.originalPageState = JSON.stringify(this.currentPage); // Save the original state
@@ -713,52 +712,51 @@ export default {
       };
     },
     async removePage() {
-      const pageId = this.currentPage.id; // Use 'id' instead of 'pageId'
+      const pageId = this.currentPage.id;
       const pageTitle = this.currentPage.title;
       console.log('Removing page:', pageId);
 
-      // Check if pageId is defined
       if (!pageId) {
         console.error('Page ID is undefined.');
         this.addToast({ message: 'Failed to delete page: Page ID is undefined.', type: 'danger' });
         return;
       }
+      
+      // Check if other users are viewing the page
+      const otherUsers = this.usersOnPage.filter(user => user.socketId !== this.$socket.id);
+      console.log("Other users on page:", this.usersOnPage);
+      // First confirmation for deleting the page
+      if (!confirm(`Are you sure you want to delete "${pageTitle}"? This action cannot be undone.`)) {
+        return;
+      }
 
-      // Confirm deletion
-      if (confirm(`Are you sure you want to delete "${pageTitle}"? This action cannot be undone.`)) {
-        try {
-          // Send DELETE request without body, using pageId as URL parameter
-          const response = await fetch(`/api/records/${pageId}`, {
-            method: 'DELETE',
-            headers: {
-              'Content-Type': 'application/json',
-            },
-          });
+      // If other users are viewing the page, show another confirmation dialog
+      if (otherUsers.length > 0) {
+        const usernames = otherUsers.map(user => user.username || 'another user').join(', ');
+        const confirmMessage = `Other users (${usernames}) are also viewing this page. Are you sure you want to delete it?`;
 
-          if (!response.ok) {
-            throw new Error('Failed to delete page');
-          }
-
-          // Emit the deletePage event via Socket.IO
-          this.$socket.emit('deletePage', { id: pageId, title: pageTitle, pageId });
-
-          // Redirect the user to the homepage after deletion
-          this.$router.push({ name: 'HomePage' });
-          //this.addToast({ message: `Page "${pageTitle}" deleted successfully.`, type: 'success' });
-        } catch (error) {
-          this.addToast({ message: `Failed to delete page: ${error.message}`, type: 'danger' });
+        if (!confirm(confirmMessage)) {
+          return;
         }
       }
-    },
-    handlePageDeleted(data) {
-      // Check if the current page is the one that has been deleted
-      if (this.currentPage && this.currentPage.id === data.id) {
-        alert(`The page "${data.title}" has been deleted.`);
+
+      try {
+        const response = await fetch(`/api/records/${pageId}`, {
+          method: 'DELETE',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        });
+
+        if (!response.ok) {
+          throw new Error('Failed to delete page');
+        }
+
+        this.$socket.emit('deletePage', { id: pageId, title: pageTitle, pageId });
         this.$router.push({ name: 'HomePage' });
+      } catch (error) {
+        this.addToast({ message: `Failed to delete page: ${error.message}`, type: 'danger' });
       }
-      // Remove the page from the Vuex state
-      //this.$store.commit('deletePage', data.id);
-      //this.addToast({ message: `Page "${data.title}" has been deleted.`, type: 'danger' });
     },
     handlePageUpdated(data) {
       console.log('Page updated event received:', data);
@@ -769,45 +767,32 @@ export default {
     },
   },
   created() {
+    //const docId = this.currentPage.id;
     const docId = this.$route.params.id;
     this.fetchShifts();
+    const userName = localStorage.getItem('userName');
+    console.log('DOC ID', docId);
     if (docId) {
       this.fetchPageDetails(docId);
+      this.$socket.emit('viewPage', { pageId: docId, userName: userName });
     } else {
       console.error("Page ID is undefined.");
     }
+    this.$socket.on('usersOnPage', (users) => {
+      console.log('Users on page:', users);
+      this.$store.commit('setUsersOnPage', users);
+    });
     this.$socket.on('connect', () => {
       this.socketId = this.$socket.id;
     });
-    // this.$socket.on('pageDeleted', (data) => {
-    //   console.log(`Page deleted: ${data.id} - ${data.title}`);
-
-    //   // Check if the current page is the one that has been deleted
-    //   if (this.currentPage && this.currentPage.id === data.id) {
-    //     this.$router.push({ name: 'HomePage' });
-    //   }
-
-    //   // Commit to Vuex store to remove the page
-    //   this.$store.commit('deletePage', data.id);
-
-    //   // Show a toast notification
-    //   //his.addToast({ message: `Page "${data.title}" has been deleted.`, type: 'danger' });
-    // });
-
-    this.$socket.on('usersOnPage', (users) => {
-      this.usersOnPage = users;
-    });
+    
 
   },
   beforeUnmount() {
-    // Notify others that the user has stopped viewing the page
-    if (this.currentPage) {
-      this.$socket.emit('leavePage', { pageId: this.currentPage.id });
-    }
 
-    // Clean up socket listeners
     this.$socket.off('usersOnPage');
     this.$socket.off('pageDeleted');
+    this.$socket.emit('leavePage', { pageId: this.currentPage.id });
   }
 
 };

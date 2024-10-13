@@ -115,28 +115,37 @@ async function initializeCosmosDB() {
 initializeCosmosDB();
 
 app.set('trust proxy', 1);
-
+let usersOnPages = {};
 
 
 io.on('connection', (socket) => {
   console.log('New client connected');
-  socket.on('viewPage', ({ pageId }) => {
-    if (!usersOnPage[pageId]) {
-      usersOnPage[pageId] = [];
-    }
-    usersOnPage[pageId].push({ socketId: socket.id, pageId });
 
-    // Notify all clients about users on the page
-    io.emit('usersOnPage', Object.values(usersOnPage).flat());
+  socket.on('viewPage', ({ pageId, userName }) => {
+    const socketId = socket.id;
+    
+    Object.keys(usersOnPages).forEach((page) => {
+      usersOnPages[page] = usersOnPages[page].filter(user => user.socketId !== socketId);
+    });
+
+    if (!usersOnPages[pageId]) {
+      usersOnPages[pageId] = [];
+    }
+
+    usersOnPages[pageId].push({ socketId, userName, pageId });
+    //socket.join(pageId);
+    console.log('Users on page after viewPage:', usersOnPages[pageId]);
+    io.to(pageId).emit('usersOnPage', usersOnPages[pageId]);
+    
   });
   socket.on('leavePage', ({ pageId }) => {
-    if (usersOnPage[pageId]) {
-      usersOnPage[pageId] = usersOnPage[pageId].filter(user => user.socketId !== socket.id);
-      if (usersOnPage[pageId].length === 0) {
-        delete usersOnPage[pageId];
-      }
+    // Remove the user from the page
+    if (usersOnPages[pageId]) {
+      usersOnPages[pageId] = usersOnPages[pageId].filter(user => user.socketId !== socket.id);
+
+      // Emit the updated users list to the room
+      io.to(pageId).emit('usersOnPage', usersOnPages[pageId]);
     }
-    io.emit('usersOnPage', Object.values(usersOnPage).flat());
   });
 
 
@@ -151,14 +160,13 @@ io.on('connection', (socket) => {
     delete usersOnPage[id]; // Clean up users tracking
   });
   socket.on('disconnect', () => {
-    console.log('Client disconnected:', socket.id);
-    Object.keys(usersOnPage).forEach(pageId => {
-      usersOnPage[pageId] = usersOnPage[pageId].filter(user => user.socketId !== socket.id);
-      if (usersOnPage[pageId].length === 0) {
-        delete usersOnPage[pageId];
-      }
+    console.log('Client disconnected');
+
+    // Remove the user from all pages
+    Object.keys(usersOnPages).forEach((pageId) => {
+      usersOnPages[pageId] = usersOnPages[pageId].filter(user => user.socketId !== socket.id);
+      io.to(pageId).emit('usersOnPage', usersOnPages[pageId]);
     });
-    io.emit('usersOnPage', Object.values(usersOnPage).flat());
   });
 });
 
@@ -190,7 +198,11 @@ app.get('/api/search', async (req, res) => {
           EXISTS (SELECT VALUE prb FROM prb IN c.clients.Client1.problems WHERE prb.prbNumber = @searchQuery) OR
           EXISTS (SELECT VALUE prb FROM prb IN c.clients.Client2.problems WHERE prb.prbNumber = @searchQuery) OR
           EXISTS (SELECT VALUE sr FROM sr IN c.clients.Client1.serviceRequests WHERE sr.ritmNumber = @searchQuery) OR
-          EXISTS (SELECT VALUE sr FROM sr IN c.clients.Client2.serviceRequests WHERE sr.ritmNumber = @searchQuery)
+          EXISTS (SELECT VALUE sr FROM sr IN c.clients.Client2.serviceRequests WHERE sr.ritmNumber = @searchQuery) OR
+          EXISTS (SELECT VALUE mainPrbInc FROM mainPrbInc IN c.clients.Client1.incidents WHERE Contains(mainPrbInc.mainProblem, @searchQuery)) OR
+          EXISTS (SELECT VALUE mainPrbInc FROM mainPrbInc IN c.clients.Client2.incidents WHERE Contains(mainPrbInc.mainProblem, @searchQuery)) OR
+          EXISTS (SELECT VALUE notesInc FROM notesInc IN c.clients.Client1.incidents WHERE Contains(notesInc.notes, @searchQuery)) OR
+          EXISTS (SELECT VALUE notesInc FROM notesInc IN c.clients.Client2.incidents WHERE Contains(notesInc.mainProblem, @searchQuery))
       `,
       parameters: [{ name: "@searchQuery", value: searchQuery }]
     };
@@ -335,13 +347,13 @@ app.put('/api/records/:id', async (req, res) => {
 
 app.delete('/api/records/:id', async (req, res) => {
   const pageId = req.params.id;
-  const partitionKey = req.body.pageId;  // Use 'id' as the partition key
+  const partitionKey = req.body.pageId; 
   try {
     if (!container) {
       throw new Error('Cosmos DB container is not initialized');
     }
     await container.item(pageId, partitionKey).delete();
-    res.status(204).send(); // Send a 204 No Content response
+    res.status(204).send();
     io.emit('pageDeleted', { id: pageId });
   } catch (error) {
     console.error('Error deleting page:', error);

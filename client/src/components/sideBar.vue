@@ -42,10 +42,7 @@ export default {
   computed: {
     ...mapState(['pages', 'currentPage']),
     filteredPages() {
-      // Assuming your pages have a 'date' property and it's in a format that can be compared
       const sortedPages = [...this.pages].sort((a, b) => new Date(b.date) - new Date(a.date));
-
-      // Filter based on search query
       if (this.searchQuery) {
         return sortedPages.filter(page => 
           page.title.toLowerCase().includes(this.searchQuery.toLowerCase())
@@ -62,7 +59,9 @@ export default {
     ...mapActions(['fetchPages', 'fetchPageDetails', 'debouncedCreateHandoverTemplate', 'debouncedCopyHandover', 'addToast']),
     ...mapMutations(['setCurrentPage']),
     loadPage(pageId) {
+      const userName = localStorage.getItem('userName');
       this.fetchPageDetails(pageId);
+      this.$socket.emit('viewPage', { pageId: pageId, userName: userName });
       console.log(this.userProfile.role);
     },
     createNewHandoverWithData() {
@@ -110,6 +109,7 @@ export default {
   beforeUnmount() {
     this.$socket.off('pageCreated');
     this.$socket.off('pageDeleted');
+    this.$socket.off('usersOnPage');
   }
 }
 </script>
