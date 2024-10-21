@@ -191,18 +191,17 @@ app.get('/api/search', async (req, res) => {
         SELECT c.id, c.title
         FROM c
         WHERE 
-          EXISTS (SELECT VALUE i FROM i IN c.clients.Client1.incidents WHERE i.incNumber = @searchQuery) OR
-          EXISTS (SELECT VALUE i FROM i IN c.clients.Client2.incidents WHERE i.incNumber = @searchQuery) OR
-          EXISTS (SELECT VALUE chg FROM chg IN c.clients.Client1.changes WHERE chg.chgNumber = @searchQuery) OR
-          EXISTS (SELECT VALUE chg FROM chg IN c.clients.Client2.changes WHERE chg.chgNumber = @searchQuery) OR
-          EXISTS (SELECT VALUE prb FROM prb IN c.clients.Client1.problems WHERE prb.prbNumber = @searchQuery) OR
-          EXISTS (SELECT VALUE prb FROM prb IN c.clients.Client2.problems WHERE prb.prbNumber = @searchQuery) OR
-          EXISTS (SELECT VALUE sr FROM sr IN c.clients.Client1.serviceRequests WHERE sr.ritmNumber = @searchQuery) OR
-          EXISTS (SELECT VALUE sr FROM sr IN c.clients.Client2.serviceRequests WHERE sr.ritmNumber = @searchQuery) OR
-          EXISTS (SELECT VALUE mainPrbInc FROM mainPrbInc IN c.clients.Client1.incidents WHERE Contains(mainPrbInc.mainProblem, @searchQuery)) OR
-          EXISTS (SELECT VALUE mainPrbInc FROM mainPrbInc IN c.clients.Client2.incidents WHERE Contains(mainPrbInc.mainProblem, @searchQuery)) OR
-          EXISTS (SELECT VALUE notesInc FROM notesInc IN c.clients.Client1.incidents WHERE Contains(notesInc.notes, @searchQuery)) OR
-          EXISTS (SELECT VALUE notesInc FROM notesInc IN c.clients.Client2.incidents WHERE Contains(notesInc.mainProblem, @searchQuery))
+          EXISTS (SELECT VALUE i FROM i IN c.records.incidents WHERE i.incNumber = @searchQuery) OR
+          EXISTS (SELECT VALUE chg FROM chg IN c.records.changes WHERE chg.chgNumber = @searchQuery) OR
+          EXISTS (SELECT VALUE prb FROM prb IN c.records.problems WHERE prb.prbNumber = @searchQuery) OR
+          EXISTS (SELECT VALUE sr FROM sr IN c.records.serviceRequests WHERE sr.ritmNumber = @searchQuery) OR
+          EXISTS (SELECT VALUE mainPrbInc FROM mainPrbInc IN c.records.incidents WHERE Contains(mainPrbInc.mainProblem, @searchQuery)) OR
+          EXISTS (SELECT VALUE notesInc FROM notesInc IN c.records.incidents WHERE Contains(notesInc.notes, @searchQuery)) OR
+          EXISTS (SELECT VALUE notesPrb FROM notesPrb IN c.records.problems WHERE Contains(notesPrb.notes, @searchQuery)) OR
+          EXISTS (SELECT VALUE rcaPrb FROM rcaPrb IN c.records.problems WHERE Contains(rcaPrb.rca, @searchQuery)) OR
+          EXISTS (SELECT VALUE notesChg FROM notesChg IN c.records.changes WHERE Contains(notesChg.notes, @searchQuery)) OR
+          EXISTS (SELECT VALUE notesSr FROM notesSr IN c.records.serviceRequests WHERE Contains(notesSr.notes, @searchQuery)) OR
+          EXISTS (SELECT VALUE dscSr FROM dscSr IN c.records.serviceRequests WHERE Contains(dscSr.short_description, @searchQuery))
       `,
       parameters: [{ name: "@searchQuery", value: searchQuery }]
     };
@@ -221,12 +220,12 @@ app.get('/api/search', async (req, res) => {
 
 
 app.post('/api/records', async (req, res) => {
-  const { id, title, date, engineersOnShift, clients, pageId } = req.body;
+  const { id, title, date, engineersOnShift, records, pageId } = req.body;
   try {
     if (!container) {
       throw new Error('Cosmos DB container is not initialized');
     }
-    const newRecord = { id, title, date, engineersOnShift, clients, pageId };
+    const newRecord = { id, title, date, engineersOnShift, records, pageId };
     const { resource: createdItem } = await container.items.create(newRecord);
     res.status(201).json(createdItem);
     io.emit('pageCreated', createdItem);
@@ -261,12 +260,12 @@ app.post('/api/copy-handover', async (req, res) => {
       let newDocument = { ...latestDocument };
       delete newDocument.id;
 
-      Object.keys(newDocument.clients).forEach(client => {
-        newDocument.clients[client].incidents = newDocument.clients[client].incidents.filter(incident => incident.status !== 'Resolved');
-        newDocument.clients[client].problems = newDocument.clients[client].problems.filter(problem => problem.status !== 'Resolved');
-        newDocument.clients[client].changes = newDocument.clients[client].changes.filter(change => change.status !== 'Closed');
-        newDocument.clients[client].serviceRequests = newDocument.clients[client].serviceRequests.filter(serviceRequest => serviceRequest.status !== 'Closed');
-      });
+      newDocument.records = {
+        incidents: newDocument.records.incidents.filter(incident => incident.status !== 'Resolved'),
+        problems: newDocument.records.problems.filter(problem => problem.status !== 'Resolved'),
+        changes: newDocument.records.changes.filter(change => change.status !== 'Closed'),
+        serviceRequests: newDocument.records.serviceRequests.filter(serviceRequest => serviceRequest.status !== 'Closed'),
+      };
 
       let today = new Date();
       newDocument.date = today.toISOString().split('T')[0];

@@ -69,10 +69,13 @@ export default {
       const latestPage = await this.fetchLatestPage();
       const incidentsByClient = {};
 
-      Object.entries(latestPage.clients).forEach(([clientName, client]) => {
-        const incidents = client.incidents.filter(incident => incident.status !== 'Resolved');
-        if (incidents.length > 0) {
-          incidentsByClient[clientName] = incidents;
+      latestPage.records.incidents.forEach(incident => {
+        if (incident.status !== 'Resolved') {
+          // Group incidents by client name
+          if (!incidentsByClient[incident.client]) {
+            incidentsByClient[incident.client] = [];
+          }
+          incidentsByClient[incident.client].push(incident);
         }
       });
 

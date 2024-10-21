@@ -15,6 +15,17 @@
               <li><a class="dropdown-item" id="add-req-btn" href="#" data-bs-toggle="modal" data-bs-target="#addRequestModal">Add Service Request</a></li>
             </ul>
           </div>
+          <div :class="{'dropdown-import': true, 'disabled': !isEngineer}">
+            <button class="btn btn-link text-decoration-none" id="dropdownMenuButton" data-bs-toggle="dropdown" aria-expanded="false">
+              <i class="bi bi-upload"></i>
+            </button>
+            <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="dropdownMenuButton">
+              <li><a class="dropdown-item" id="add-inc-btn" href="#" data-bs-toggle="modal" data-bs-target="#importModal">Import Incidents</a></li>
+              <li><a class="dropdown-item" id="add-prb-btn" href="#" data-bs-toggle="modal" data-bs-target="#">Import Problems</a></li>
+              <li><a class="dropdown-item" id="add-chg-btn" href="#" data-bs-toggle="modal" data-bs-target="#">Import Changes</a></li>
+              <li><a class="dropdown-item" id="add-req-btn" href="#" data-bs-toggle="modal" data-bs-target="#">Import Service Requests</a></li>
+            </ul>
+          </div>
           <div class="dropdown">
             <button class="btn btn-link text-decoration-none" id="dropdownMenuButton" data-bs-toggle="dropdown" aria-expanded="false">
               <i class="bi bi-three-dots-vertical"></i>
@@ -22,7 +33,7 @@
             <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="dropdownMenuButton">
               <li><a class="dropdown-item" @click="toggleEditMode">{{ editMode ? 'Save' : 'Edit' }}</a></li>
               <li><hr class="dropdown-divider"></li>
-              <li><a class="dropdown-item" id="remove-btn" href="#" data-bs-toggle="modal" data-bs-target="#removePageModal">Remove page</a></li>
+              <li><a id="remove-btn" href="#" :class="{ 'dropdown-item': true,'disabled': isEngineer}" data-bs-toggle="modal" data-bs-target="#removePageModal">Remove page</a></li>
             </ul>
           </div>
         </div>
@@ -41,7 +52,7 @@
                 <div class="mb-3">
                   <label for="clientSelect" class="form-label">Client</label>
                   <select class="form-select" id="clientSelect" v-model="newIncident.client" required>
-                    <option v-for="(client, clientName) in currentPage.clients" :key="clientName" :value="clientName">{{ clientName }}</option>
+                    <option>Client1</option>
                   </select>
                 </div>
                 <div class="mb-3">
@@ -87,6 +98,31 @@
           </div>
         </div>
       </div>
+
+      <!-- Import Incident Modal -->
+      <div class="modal fade" id="importModal" tabindex="-1" aria-labelledby="importModalLabel" aria-hidden="true">
+      <div class="modal-dialog">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title" id="importModalLabel">Import Incidents</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+          </div>
+          <div class="modal-body">
+            <div class="mb-3">
+              <label for="clientNameInput" class="form-label">Client Name</label>
+              <input type="text" class="form-control" id="clientNameInput" v-model="clientName" placeholder="Enter client name" />
+            </div>
+            <input type="file" @change="handleFileUpload" accept=".json" />
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            <button type="button" class="btn btn-primary" @click="importIncidentRecords">Import</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+
       <!-- Add Problem Modal -->
       <div class="modal fade" id="addProblemModal" tabindex="-1" aria-labelledby="addProblemModalLabel" aria-hidden="true">
         <div class="modal-dialog">
@@ -100,7 +136,7 @@
                 <div class="mb-3">
                   <label for="clientSelect" class="form-label">Client</label>
                   <select class="form-select" id="clientSelect" v-model="newProblem.client" required>
-                    <option v-for="(client, clientName) in currentPage.clients" :key="clientName" :value="clientName">{{ clientName }}</option>
+                    <option>Client1</option>
                   </select>
                 </div>
                 <div class="mb-3">
@@ -157,7 +193,7 @@
                 <div class="mb-3">
                   <label for="clientSelect" class="form-label">Client</label>
                   <select class="form-select" id="clientSelect" v-model="newChange.client" required>
-                    <option v-for="(client, clientName) in currentPage.clients" :key="clientName" :value="clientName">{{ clientName }}</option>
+                    <option>Client1</option>
                   </select>
                 </div>
                 <div class="mb-3">
@@ -210,7 +246,7 @@
                 <div class="mb-3">
                   <label for="clientSelect" class="form-label">Client</label>
                   <select class="form-select" id="clientSelect" v-model="newRequest.client" required>
-                    <option v-for="(client, clientName) in currentPage.clients" :key="clientName" :value="clientName">{{ clientName }}</option>
+                    <option>Client1</option>
                   </select>
                 </div>
                 <div class="mb-3">
@@ -229,7 +265,7 @@
                 </div>
                 <div class="mb-3">
                   <label for="notes" class="form-label">Short request description</label>
-                  <textarea class="form-control" id="notes" v-model="newRequest.desc" rows="3" required></textarea>
+                  <textarea class="form-control" id="notes" v-model="newRequest.short_description" rows="3" required></textarea>
                 </div>
                 <div class="mb-3">
                   <label for="notes" class="form-label">Notes</label>
@@ -289,9 +325,7 @@
         </div>
       </div>
       <!-- Display client data -->
-      <div v-for="(client, clientName) in currentPage.clients" :key="clientName">
-      <h5>{{ clientName }}</h5>
-      <div v-if="client.incidents.length > 0">
+      <div v-if="currentPage.records && currentPage.records.incidents.length > 0">
         <h6>Incidents</h6>
         <table class="table table-fixed">
           <thead>
@@ -305,7 +339,7 @@
             </tr>
           </thead>
           <tbody>
-            <tr v-for="incident in client.incidents" :key="incident.incNumber" required>
+            <tr v-for="incident in currentPage.records.incidents" :key="incident.incNumber" required>
               <td>{{ incident.incNumber }}</td>
               <td>
                 <div v-if="!editMode">{{ incident.status }}</div>
@@ -351,7 +385,7 @@
           </tbody>
         </table>
       </div>
-      <div v-if="client.problems.length > 0">
+      <div v-if="currentPage.records && currentPage.records.problems.length > 0">
         <h6>Problems</h6>
         <table class="table table-fixed">
           <thead>
@@ -364,7 +398,7 @@
             </tr>
           </thead>
           <tbody>
-            <tr v-for="problem in client.problems" :key="problem.prbNumber" required>
+            <tr v-for="problem in currentPage.records.problems" :key="problem.prbNumber" required>
               <td>{{ problem.prbNumber }}</td>
               <td>
                 <div v-if="!editMode">{{ problem.status }}</div>
@@ -405,7 +439,7 @@
         </table>
       </div>
 
-      <div v-if="client.changes.length > 0">
+      <div v-if="currentPage.records && currentPage.records.changes.length > 0">
         <h6>Changes</h6>
         <table class="table table-fixed">
           <thead>
@@ -418,7 +452,7 @@
             </tr>
           </thead>
           <tbody>
-            <tr v-for="change in client.changes" :key="change.chgNumber" required>
+            <tr v-for="change in currentPage.records.changes" :key="change.chgNumber" required>
               <td>{{ change.chgNumber }}</td>
               <td>
                 <div v-if="!editMode">{{ change.status }}</div>
@@ -457,7 +491,7 @@
         </table>
       </div>
 
-      <div v-if="client.serviceRequests.length > 0">
+      <div v-if="currentPage.records && currentPage.records.serviceRequests.length > 0">
         <h6>Service Requests</h6>
         <table class="table table-fixed">
           <thead>
@@ -469,7 +503,7 @@
             </tr>
           </thead>
           <tbody>
-            <tr v-for="request in client.serviceRequests" :key="request.ritmNumber" required>
+            <tr v-for="request in currentPage.records.serviceRequests" :key="request.ritmNumber" required>
               <td>{{ request.ritmNumber }}</td>
               <td>
                 <div v-if="!editMode">{{ request.status }}</div>
@@ -484,9 +518,9 @@
                 </div>
               </td>
               <td class="short-request-description">
-                <div v-if="!editMode">{{ request.desc }}</div>
+                <div v-if="!editMode">{{ request.short_description }}</div>
                 <div v-else>
-                  <textarea type="text" v-model="request.desc" class="form-control custom-textarea" required></textarea>
+                  <textarea type="text" v-model="request.short_description" class="form-control custom-textarea" required></textarea>
                 </div>
               </td>
               <td>
@@ -500,7 +534,6 @@
         </table>
       </div>
 
-    </div>
     </div>
     <div v-else>No data available</div>
   </div>
@@ -516,6 +549,9 @@ export default {
       userProfile: { role: localStorage.getItem('roles') },
       originalPageState: null,
       usersOnPage: [],
+      currentImportType: '',
+      jsonData: null,
+      clientName: '',
       newIncident: {
         client: '',
         incNumber: '',
@@ -545,7 +581,7 @@ export default {
         client: '',
         ritmNumber: '',
         status: 'Draft',
-        desc: '',
+        short_description: '',
         notes: ''
       }
     };
@@ -589,21 +625,49 @@ export default {
         }
       }
     },
+
+    //--Import file--
+    handleFileUpload(event) {
+      const file = event.target.files[0];
+      if (file) {
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          try {
+            this.jsonData = JSON.parse(e.target.result);
+          } catch (error) {
+            console.error('Invalid JSON format:', error);
+            this.addToast({ message: 'Invalid JSON file format', type: 'danger' });
+          }
+        };
+        reader.readAsText(file);
+      }
+    },
+
+
     //--INC addition--
     async saveIncident() {
-      const client = this.currentPage.clients[this.newIncident.client];
-      client.incidents.push({
+
+      if (!this.currentPage.records) {
+        this.currentPage.records = {};
+      }
+
+      if (!this.currentPage.records.incidents) {
+        this.currentPage.records.incidents = [];
+      }
+
+      const newIncident = {
+        client: this.newIncident.client,
         incNumber: this.newIncident.incNumber,
         status: this.newIncident.status,
         dateOpened: this.newIncident.dateOpened,
         priority: this.newIncident.priority,
         mainProblem: this.newIncident.mainProblem,
         notes: this.newIncident.notes
-      });
+      };
+      this.currentPage.records.incidents.push(newIncident);
 
       try {
         await this.debouncedUpdatePageDetails({ page: this.currentPage, source: this.$socket.id });
-        //this.$socket.emit('editPage', this.currentPage);
         this.resetNewIncident();
         this.$router.push({ name: 'HomePage' });
       } catch (error) {
@@ -622,16 +686,69 @@ export default {
         notes: ''
       };
     },
+
+    //--Import incidents--
+    async importIncidentRecords() {
+      if (!this.jsonData) {
+        this.addToast({ message: 'No file uploaded', type: 'danger' });
+        return;
+      }
+
+      if (!this.clientName) {
+        this.addToast({ message: 'Client name is required', type: 'danger' });
+        return;
+      }
+
+      try {
+        // Ensure the incidents array exists
+        // if (!this.currentPage.records.incidents) {
+        //   this.$set(this.currentPage.records, 'incidents', []);
+        // }
+
+        // Iterate through the uploaded JSON data and map the fields
+        console.log('Importing incidents:', this.jsonData);
+        this.jsonData.records.forEach(record => {
+          const newIncident = {
+            client: this.clientName, // Use the client name entered by the user
+            incNumber: record.number || 'INC000000', // Map "number"s to "incNumber", defaulting if missing
+            status: 'Active', // Hardcoded for now
+            dateOpened: new Date().toISOString(), // Use current date for demo purposes
+            priority: 'P4 - Low', // Hardcoded priority for demo
+            mainProblem: record.short_description || 'No description', // Map "short_description" to "mainProblem"
+            notes: 'Test note', // Hardcoded note
+          };
+
+          // Add the mapped record to the incidents array
+          this.currentPage.records.incidents.push(newIncident);
+        });
+
+        // Update the page details after importing the records
+        await this.debouncedUpdatePageDetails({ page: this.currentPage, source: this.$socket.id });
+        this.addToast({ message: `Incidents imported successfully`, type: 'success' });
+
+        // Reset data and close modal
+        this.jsonData = null;
+        this.clientName = '';
+        this.currentImportType = '';
+      } catch (error) {
+        console.error('Error importing incidents:', error);
+        this.addToast({ message: 'Error importing incidents', type: 'danger' });
+      }
+    },
+
+
     //--Problem addition--
     async saveProblem() {
-      const client = this.currentPage.clients[this.newProblem.client];
-      client.problems.push({
+      const newProblem = {
+        client: this.newProblem.client, // Store client info directly in the problem
         prbNumber: this.newProblem.prbNumber,
         status: this.newProblem.status,
         priority: this.newProblem.priority,
         rca: this.newProblem.rca,
         notes: this.newProblem.notes
-      });
+      };
+      
+      this.currentPage.records.problems.push(newProblem);
 
       try {
         await this.debouncedUpdatePageDetails({ page: this.currentPage, source: this.$socket.id });
@@ -655,14 +772,16 @@ export default {
     },
     //--Change addition--
     async saveChange() {
-      const client = this.currentPage.clients[this.newChange.client];
-      client.changes.push({
+      const newChange = {
+        client: this.newChange.client, // Store client info directly in the change
         chgNumber: this.newChange.chgNumber,
         status: this.newChange.status,
         startDate: this.newChange.startDate,
         endDate: this.newChange.endDate,
         notes: this.newChange.notes
-      });
+      };
+
+      this.currentPage.records.changes.push(newChange);
 
       try {
         await this.debouncedUpdatePageDetails({ page: this.currentPage, source: this.$socket.id });
@@ -685,13 +804,15 @@ export default {
     },
     //--Request addition--
     async saveRequest() {
-      const client = this.currentPage.clients[this.newRequest.client];
-      client.serviceRequests.push({
+      const newRequest = {
+        client: this.newRequest.client, // Store client info directly in the service request
         ritmNumber: this.newRequest.ritmNumber,
         status: this.newRequest.status,
-        desc: this.newRequest.desc,
+        short_description: this.newRequest.short_description,
         notes: this.newRequest.notes
-      });
+      };
+
+      this.currentPage.records.serviceRequests.push(newRequest);
 
       try {
         await this.debouncedUpdatePageDetails({ page: this.currentPage, source: this.$socket.id });
@@ -707,7 +828,7 @@ export default {
         client: '',
         ritmNumber: '',
         status: 'Draft',
-        desc: '',
+        short_description: '',
         notes: ''
       };
     },
@@ -817,7 +938,7 @@ export default {
   z-index: 10;  /* Higher index to keep it above other content */
 }
 
-.bi-three-dots-vertical, .bi-plus-lg {
+.bi-three-dots-vertical, .bi-plus-lg, .bi-upload {
   color: rgb(0, 0, 0);
 }
 
@@ -832,9 +953,16 @@ export default {
   gap: 10px;  /* Maintain spacing between buttons */
 }
 
-.dropwdowns-opt.disabled {
+.dropwdowns-opt.disabled, 
+.dropdown-import.disabled {
   pointer-events: none;
   opacity: 0.5;
+}
+
+.dropdown-item.disabled {
+  pointer-events: none;
+  color: #6c757d !important;
+  background-color: #e9ecef;
 }
 
 .table-fixed {

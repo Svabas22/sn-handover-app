@@ -13,15 +13,18 @@
       >
         <span class="navbar-toggler-icon"></span>
       </button>
-      <div class="collapse navbar-collapse" id="navbarSupportedContent">
-        <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+
+      <div class="collapse navbar-collapse justify-content-between" id="navbarSupportedContent">
+        <ul class="navbar-nav">
           <li class="nav-item">
             <a class="nav-link active" aria-current="page" href="#" @click="openSlaModal">SLA Progress</a>
           </li>
         </ul>
-        <form class="d-flex position-relative" role="search" @submit.prevent="performSearch">
+
+        <!-- Center the search bar with flex-grow -->
+        <form class="d-flex justify-content-center flex-grow-1 mx-3" role="search" @submit.prevent="performSearch">
           <input
-            class="form-control me-2"
+            class="form-control w-100"
             v-model="searchTerm"
             type="search"
             placeholder="Search"
@@ -36,6 +39,7 @@
             </ul>
           </div>
         </form>
+
         <ul class="navbar-nav">
           <li class="nav-item dropdown">
             <a
@@ -54,6 +58,7 @@
           </li>
         </ul>
       </div>
+
       <SLAProgressModal ref="slaModal" />
     </div>
   </nav>
@@ -126,11 +131,11 @@ ul {
 }
 
 li {
-  float: left;
+  float: none;
 }
 
 li a {
-  display: block;
+  display: left;
   text-align: center;
   padding: 14px 16px;
   text-decoration: none;
@@ -149,14 +154,20 @@ li a:hover {
   border-radius: 50%;
 }
 
+form {
+  max-width: 600px;
+  flex-grow: 1;
+  position: relative;
+}
 .search-results {
   position: absolute;
   top: 100%;
   left: 0;
-  width: 100%;
+  width: 100%; 
   background: white;
   border: 1px solid #ccc;
   z-index: 1000;
+  box-sizing: border-box;
 }
 
 .search-results ul {
@@ -166,6 +177,7 @@ li a:hover {
 }
 
 .search-results li {
+  display: block;
   padding: 10px;
   border-bottom: 1px solid #ccc;
 }
@@ -177,6 +189,7 @@ li a:hover {
 .search-results a {
   color: #333;
   text-decoration: none;
+  display: block;
 }
 
 .search-results a:hover {

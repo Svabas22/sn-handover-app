@@ -1,22 +1,11 @@
 {
     "title": "Handover 2024-06-12 - Night",
     "date": "2024-06-12",
-    "engineersOnShift": [
-    ],
-    "clients": {
-        "Client1": {
-            "clientName": "Client1",
-            "incidents": [],
-            "changes": [],
-            "problems": [],
-            "serviceRequests": []
-        },
-        "Client2": {
-            "clientName": "Client2",
-            "incidents": [],
-            "changes": [],
-            "problems": [],
-            "serviceRequests": []
-        }
+    "engineersOnShift": [],
+    "records": {
+      "incidents": [],
+      "changes": [],
+      "problems": [],
+      "serviceRequests": []
     }
-}
+  }
