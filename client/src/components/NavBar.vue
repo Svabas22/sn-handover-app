@@ -39,27 +39,32 @@
             </ul>
           </div>
         </form>
-
-        <ul class="navbar-nav">
-          <li class="nav-item dropdown">
-            <a
-              class="nav-link dropdown-toggle"
-              href="#"
-              id="navbarDropdownMenuLink"
-              role="button"
-              data-bs-toggle="dropdown"
-              aria-expanded="false"
-            >
-              {{ userProfile.displayName }}
-            </a>
-            <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="navbarDropdownMenuLink">
-              <li><a class="dropdown-item" href="/auth/signout">Sign out</a></li>
-            </ul>
-          </li>
-        </ul>
+        <div class="d-flex align-items-center">
+          <button class="btn btn-link text-decoration-none" id="settings-btn" href="#" @click="openSettingsModal">
+            <i class="bi bi-gear"></i>
+          </button>
+          <ul class="navbar-nav">
+            <li class="nav-item dropdown">
+              <a
+                class="nav-link dropdown-toggle"
+                href="#"
+                id="navbarDropdownMenuLink"
+                role="button"
+                data-bs-toggle="dropdown"
+                aria-expanded="false"
+              >
+                {{ userProfile.displayName }}
+              </a>
+              <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="navbarDropdownMenuLink">
+                <li><a class="dropdown-item" href="/auth/signout">Sign out</a></li>
+              </ul>
+            </li>
+          </ul>
+        </div>
       </div>
 
       <SLAProgressModal ref="slaModal" />
+      <settingsModal ref="settingsModal" />
     </div>
   </nav>
 </template>
@@ -68,12 +73,14 @@
 <script>
 import 'bootstrap/dist/js/bootstrap.bundle.js';
 import SLAProgressModal from './SLAComp.vue';
+import settingsModal from './settingsComp.vue';
 import { mapActions, mapState } from 'vuex';
 
 export default {
   name: 'NavBarComponent',
   components: {
     SLAProgressModal,
+    settingsModal
   },
   data() {
     return {
@@ -98,6 +105,9 @@ export default {
     },
     openSlaModal() {
       this.$refs.slaModal.openSlaModal();
+    },
+    openSettingsModal() {
+      this.$refs.settingsModal.openSettingsModal();
     },
     clearSearchResults() {
       this.$store.commit('setSearchResults', []); // Clear search results
@@ -154,6 +164,11 @@ li a:hover {
   border-radius: 50%;
 }
 
+.nav-options {
+  display: flex; /* Flexbox for proper alignment */
+  align-items: center; /* Align items vertically centered */
+}
+
 form {
   max-width: 600px;
   flex-grow: 1;
@@ -194,5 +209,10 @@ form {
 
 .search-results a:hover {
   background-color: #f0f0f0;
+}
+
+#settings-btn {
+  margin-right: 10px;
+  color: black;
 }
 </style>

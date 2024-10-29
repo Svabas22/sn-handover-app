@@ -99,6 +99,7 @@ const key = process.env.COSMOS_DB_KEY;
 const databaseId = "handoversys";
 const containerId = "snRecords";
 const shiftsContainerId = "snShifts";
+const clientsContainerId = "snClients";
 const client = new CosmosClient({ endpoint, key });
 let container;
 
@@ -107,6 +108,7 @@ async function initializeCosmosDB() {
     const database = (await client.databases.createIfNotExists({ id: databaseId })).database;
     container = (await database.containers.createIfNotExists({ id: containerId })).container;
     shiftsContainer = (await database.containers.createIfNotExists({ id: shiftsContainerId })).container;
+    clientsContainer = (await database.containers.createIfNotExists({ id: clientsContainerId })).container;
   } catch (error) {
     console.error('Error initializing Cosmos DB:', error);
   }
@@ -445,6 +447,71 @@ app.get('/api/latest-page', async (req, res) => {
     res.status(500).json({ error: error.message });
   }
 });
+
+// get all clients
+app.get('/api/clients', async (req, res) => {
+  try {
+    if (!clientsContainer) {
+      throw new Error('Cosmos DB container is not initialized');
+    }
+    const querySpec = {
+      query: "SELECT * FROM c ORDER BY c._ts DESC"
+    };
+    const { resources: items } = await clientsContainer.items.query(querySpec).fetchAll();
+    res.status(200).json(items);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+app.get('/api/clients/:clientId', async (req, res) => {
+  const clientId = req.params.clientId;
+  try {
+    if (!clientsContainer) {
+      throw new Error('Cosmos DB container is not initialized');
+    }
+
+    const { resource: client } = await clientsContainer.item(clientId).read();
+    
+    // Log the result for debugging
+    if (!client) {
+      console.error('No client found with the specified ID:', clientId);
+      return res.status(404).json({ error: 'Client not found' });
+    }
+
+    console.log('Fetched client data:', client);
+
+    res.status(200).json(client); // Ensure this is sending proper JSON
+  } catch (error) {
+    console.error('Error fetching client SLA quotas:', error.message);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+
+
+app.put('/api/clients/:clientId', async (req, res) => {
+  const clientId = req.params.clientId;
+  const { slaQuotas } = req.body;
+  
+  try {
+    const { resource: existingClient } = await clientsContainer.item(clientId).read();
+    
+    if (!existingClient) {
+      return res.status(404).json({ error: 'Client not found' });
+    }
+
+    existingClient.slaQuotas = slaQuotas; // Update the SLA quotas
+
+    const { resource: updatedClient } = await clientsContainer.item(clientId).replace(existingClient);
+    
+    res.status(200).json(updatedClient);
+  } catch (error) {
+    console.error('Error updating SLA quotas:', error.message);
+    res.status(500).json({ error: error.message });
+  }
+});
+
 
 
 

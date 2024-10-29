@@ -4,7 +4,7 @@
       <div class="modal-dialog modal-xl">
         <div class="modal-content">
           <div class="modal-header">
-            <h5 class="modal-title" id="slaProgressModalLabel">Incident SLA Progress</h5>
+            <h5 class="modal-title" id="slaProgressModalLabel">SLA Progress</h5>
             <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
           </div>
           <div class="modal-body">
@@ -30,14 +30,14 @@
                       <div class="progress">
                         <div
                           class="progress-bar"
-                          :style="{ width: calculateSLAProgress(incident) + '%' }"
-                          :class="slaProgressClass(incident)"
+                          :style="{ width: calculateSLAProgress(incident, clientName) + '%' }"
+                          :class="slaProgressClass(incident, clientName)"
                           role="progressbar"
-                          :aria-valuenow="calculateSLAProgress(incident)"
+                          :aria-valuenow="calculateSLAProgress(incident, clientName)"
                           aria-valuemin="0"
                           aria-valuemax="100"
                         >
-                          {{ calculateSLAProgress(incident) }}%
+                          {{ calculateSLAProgress(incident, clientName) }}%
                         </div>
                       </div>
                     </td>
@@ -61,51 +61,79 @@ export default {
   data() {
     return {
       groupedIncidents: {},
+      slaQuotasByClient: {}
     };
   },
   methods: {
-    ...mapActions(['fetchLatestPage']),
+    ...mapActions(['fetchLatestPage', 'fetchClientSLAQuotas']),
     async openSlaModal() {
       const latestPage = await this.fetchLatestPage();
       const incidentsByClient = {};
+      const slaQuotaPromises = [];
 
       latestPage.records.incidents.forEach(incident => {
         if (incident.status !== 'Resolved') {
           // Group incidents by client name
           if (!incidentsByClient[incident.client]) {
             incidentsByClient[incident.client] = [];
+            slaQuotaPromises.push(this.loadClientSLAQuotas(incident.client));
           }
           incidentsByClient[incident.client].push(incident);
         }
       });
 
+      await Promise.all(slaQuotaPromises);
       this.groupedIncidents = incidentsByClient;
       const modal = new bootstrap.Modal(document.getElementById('slaProgressModal'));
       modal.show();
     },
+    async loadClientSLAQuotas(clientName) {
+      const clientId = this.$store.state.clientNameToIdMap[clientName]; // Get clientId using clientName
+      
+      if (clientId && !this.slaQuotasByClient[clientName]) {
+        const clientData = await this.fetchClientSLAQuotas(clientId); 
+        if (clientData && clientData.slaQuotas) {
+          this.slaQuotasByClient[clientName] = clientData.slaQuotas;
+          console.log(clientName + clientId);
+        } else {
+          this.slaQuotasByClient[clientName] = {
+            quota_P1: 180, // Default values if not found in DB
+            quota_P2: 480,
+            quota_P3: 1440,
+            quota_P4: 2400
+          };
+        }
+      }
+    },
+
     formatDate(date) {
       const options = { year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' };
       return new Date(date).toLocaleDateString(undefined, options);
     },
-    calculateSLAProgress(incident) {
-      const priorities = {
-        'P1 - Critical': 3 * 60,
-        'P2 - high': 8 * 60,
-        'P3 - moderate': 24 * 60,
-        'P4 - Low': 40 * 60
+    calculateSLAProgress(incident, clientName) {
+      const slaQuotas = this.slaQuotasByClient[clientName] || {};
+      console.log(slaQuotas);
+      const priorityMapping = {
+        'P1 - Critical': slaQuotas.quota_P1,
+        'P2 - high': slaQuotas.quota_P2,
+        'P3 - moderate': slaQuotas.quota_P3,
+        'P4 - Low': slaQuotas.quota_P4
       };
+      
+      const slaTime = priorityMapping[incident.priority] || 0;
+
       const openDate = new Date(incident.dateOpened);
       const currentDate = new Date();
-      const elapsedTime = (currentDate - openDate) / (1000 * 60);
-      const slaTime = priorities[incident.priority] || 0;
+      const elapsedTime = (currentDate - openDate) / (1000 * 60); // Time in minutes
       const progress = Math.min((elapsedTime / slaTime) * 100, 100);
+      console.log(`Client: ${clientName}, Priority: ${incident.priority}, SLA Time: ${slaTime}, Progress: ${progress}`);
       return progress.toFixed(2);
     },
-    slaProgressClass(incident) {
-      const progress = this.calculateSLAProgress(incident);
+    slaProgressClass(incident, clientName) {
+      const progress = this.calculateSLAProgress(incident, clientName);
       return {
         'bg-success': progress <= 75,
-        'bg-warning': progress > 50 && progress <= 90,
+        'bg-warning': progress > 75 && progress <= 90,
         'bg-danger': progress > 90
       };
     }

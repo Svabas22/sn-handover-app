@@ -16,6 +16,8 @@ const store = createStore({
     currentShift: null,
     incidents: [],
     usersOnPage: [],
+    clients: [],
+    slaQuotas: {},
     lastUpdateSource: 'server', // Track the source of the last update
   },
   mutations: {
@@ -48,6 +50,19 @@ const store = createStore({
       if (index !== -1) {
         state.shifts.splice(index, 1, shift);
       }
+    },
+    setClients(state, clients) {
+      state.clients = clients;
+      state.clientNameToIdMap = clients.reduce((map, client) => {
+        map[client.client] = client.id;
+        return map;
+      }, {});
+    },
+    setSLAQuotas(state, { clientId, quotas }) {
+      state.slaQuotas[clientId] = quotas;
+    },
+    updateSLAQuotas(state, { clientId, quotas }) {
+      state.slaQuotas[clientId] = quotas; // Update the specific SLA quotas for the client
     },
     addToast(state, toast) {
       const id = state.toastId++;
@@ -306,7 +321,60 @@ const store = createStore({
         console.error('Error updating shift details:', error);
         commit('addToast', { message: `Update shift error: ${error.message}`, type: 'danger' });
       }
-    }
+    },
+    async fetchClients({ commit }) {
+      try {
+        const response = await fetch('/api/clients');
+        const clients = await response.json();
+        commit('setClients', clients);
+      } catch (error) {
+        console.error('Error fetching clients:', error);
+      }
+    },
+    async fetchClientSLAQuotas({ commit }, clientId) {
+      try {
+        const response = await fetch(`/api/clients/${clientId}`);
+        
+        // Check the raw response first
+        const rawData = await response.text();
+        console.log('Raw response:', rawData);  // This will help us see what's returned
+    
+        if (!response.ok) {
+          throw new Error('Failed to fetch client SLA quotas');
+        }
+    
+        // If rawData is empty or incomplete, check why before parsing
+        if (!rawData) {
+          throw new Error('No data returned from the server');
+        }
+    
+        const clientData = JSON.parse(rawData); // Parse only if the response is valid
+        commit('setClientSLAQuotas', clientData.slaQuotas);
+        return clientData;
+      } catch (error) {
+        console.error('Error fetching client SLA quotas:', error);
+      }
+    },
+    async updateClientSLAQuotas({ commit }, { clientId, slaQuotas }) {
+      try {
+        const response = await fetch(`/api/clients/${clientId}`, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ slaQuotas }),
+        });
+        if (!response.ok) {
+          throw new Error('Failed to update client SLA quotas');
+        }
+        const updatedClient = await response.json();
+        console.log('SLA quotas updated successfully:', updatedClient);
+        commit('updateClientSLAQuotas', updatedClient);
+        commit('addToast', { message: 'Client SLA quotas updated successfully.', type: 'success' });
+      } catch (error) {
+        console.error('Error updating client SLA quotas:', error);
+      }
+    }            
   },
 });
 
