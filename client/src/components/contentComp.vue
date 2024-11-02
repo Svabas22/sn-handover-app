@@ -20,10 +20,10 @@
               <i class="bi bi-upload"></i>
             </button>
             <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="dropdownMenuButton">
-              <li><a class="dropdown-item" id="add-inc-btn" href="#" data-bs-toggle="modal" data-bs-target="#importModal">Import Incidents</a></li>
-              <li><a class="dropdown-item" id="add-prb-btn" href="#" data-bs-toggle="modal" data-bs-target="#">Import Problems</a></li>
-              <li><a class="dropdown-item" id="add-chg-btn" href="#" data-bs-toggle="modal" data-bs-target="#">Import Changes</a></li>
-              <li><a class="dropdown-item" id="add-req-btn" href="#" data-bs-toggle="modal" data-bs-target="#">Import Service Requests</a></li>
+              <li><a class="dropdown-item" id="add-inc-btn" href="#" data-bs-toggle="modal" data-bs-target="#importIncidentsModal">Import Incidents</a></li>
+              <li><a class="dropdown-item" id="add-prb-btn" href="#" data-bs-toggle="modal" data-bs-target="#importProblemsModal">Import Problems</a></li>
+              <li><a class="dropdown-item" id="add-chg-btn" href="#" data-bs-toggle="modal" data-bs-target="#importChangesModal">Import Changes</a></li>
+              <li><a class="dropdown-item" id="add-req-btn" href="#" data-bs-toggle="modal" data-bs-target="#importReqModal">Import Service Requests</a></li>
             </ul>
           </div>
           <div class="dropdown">
@@ -100,7 +100,7 @@
       </div>
 
       <!-- Import Incident Modal -->
-      <div class="modal fade" id="importModal" tabindex="-1" aria-labelledby="importModalLabel" aria-hidden="true">
+      <div class="modal fade" id="importIncidentsModal" tabindex="-1" aria-labelledby="importModalLabel" aria-hidden="true">
       <div class="modal-dialog">
         <div class="modal-content">
           <div class="modal-header">
@@ -110,7 +110,11 @@
           <div class="modal-body">
             <div class="mb-3">
               <label for="clientNameInput" class="form-label">Client Name</label>
-              <input type="text" class="form-control" id="clientNameInput" v-model="clientName" placeholder="Enter client name" />
+              <select v-model="selectedClient" id="clientSelect" class="form-select">
+                <option v-for="client in clients" :key="client.id" :value="client.client">
+                  {{ client.client }}
+                </option>
+              </select>
             </div>
             <input type="file" @change="handleFileUpload" accept=".json" />
           </div>
@@ -164,7 +168,7 @@
                   </select>
                 </div>
                 <div class="mb-3">
-                  <label for="rca" class="form-label">Root cause analysis</label>
+                  <label for="rca" class="form-label">Root cause analysis summary</label>
                   <input type="text" class="form-control" id="rca" v-model="newProblem.rca" required>
                 </div>
                 <div class="mb-3">
@@ -180,6 +184,88 @@
           </div>
         </div>
       </div>
+
+      <!-- Import Problems Modal -->
+      <div class="modal fade" id="importProblemsModal" tabindex="-1" aria-labelledby="importModalLabel" aria-hidden="true">
+      <div class="modal-dialog">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title" id="importModalLabel">Import Problems</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+          </div>
+          <div class="modal-body">
+            <div class="mb-3">
+              <label for="clientNameInput" class="form-label">Client Name</label>
+              <select v-model="selectedClient" id="clientSelect" class="form-select">
+                <option v-for="client in clients" :key="client.id" :value="client.client">
+                  {{ client.client }}
+                </option>
+              </select>
+            </div>
+            <input type="file" @change="handleFileUpload" accept=".json" />
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            <button type="button" class="btn btn-primary" @click="importProblemRecords">Import</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Import Changes Modal -->
+    <div class="modal fade" id="importChangesModal" tabindex="-1" aria-labelledby="importModalLabel" aria-hidden="true">
+      <div class="modal-dialog">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title" id="importModalLabel">Import Changes</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+          </div>
+          <div class="modal-body">
+            <div class="mb-3">
+              <label for="clientNameInput" class="form-label">Client Name</label>
+              <select v-model="selectedClient" id="clientSelect" class="form-select">
+                <option v-for="client in clients" :key="client.id" :value="client.client">
+                  {{ client.client }}
+                </option>
+              </select>
+            </div>
+            <input type="file" @change="handleFileUpload" accept=".json" />
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            <button type="button" class="btn btn-primary" @click="importChangeRecords">Import</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Import Request Modal -->
+    <div class="modal fade" id="importReqModal" tabindex="-1" aria-labelledby="importModalLabel" aria-hidden="true">
+      <div class="modal-dialog">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title" id="importModalLabel">Import Changes</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+          </div>
+          <div class="modal-body">
+            <div class="mb-3">
+              <label for="clientNameInput" class="form-label">Client Name</label>
+              <select v-model="selectedClient" id="clientSelect" class="form-select">
+                <option v-for="client in clients" :key="client.id" :value="client.client">
+                  {{ client.client }}
+                </option>
+              </select>
+            </div>
+            <input type="file" @change="handleFileUpload" accept=".json" />
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            <button type="button" class="btn btn-primary" @click="importRequestRecords">Import</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
       <!-- Add change Modal -->
       <div class="modal fade" id="addChangeModal" tabindex="-1" aria-labelledby="addChangeModalLabel" aria-hidden="true">
         <div class="modal-dialog">
@@ -233,6 +319,7 @@
           </div>
         </div>
       </div>
+
       <!-- Req page Modal -->
       <div class="modal fade" id="addRequestModal" tabindex="-1" aria-labelledby="addRequestModalLabel" aria-hidden="true">
         <div class="modal-dialog">
@@ -280,6 +367,8 @@
           </div>
         </div>
       </div>
+
+
       <!-- Remove page Modal -->
       <div class="modal fade" id="removePageModal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered">
@@ -393,7 +482,7 @@
               <th>Problem Number</th>
               <th>Status</th>
               <th>Priority</th>
-              <th>Root Cause analysis</th>
+              <th>Root cause analysis summary</th>
               <th>Notes</th>
             </tr>
           </thead>
@@ -551,7 +640,7 @@ export default {
       usersOnPage: [],
       currentImportType: '',
       jsonData: null,
-      clientName: '',
+      selectedClient: '',
       newIncident: {
         client: '',
         incNumber: '',
@@ -587,7 +676,7 @@ export default {
     };
   },
   computed: {
-    ...mapState(['currentPage', 'pages', 'shifts', 'currentShift', 'toasts', 'usersOnPage']),
+    ...mapState(['clients', 'currentPage', 'pages', 'shifts', 'currentShift', 'toasts', 'usersOnPage']),
     isEngineer() {
       return this.userProfile.role === 'Engineer';
     },
@@ -602,7 +691,7 @@ export default {
     }
   },
   methods: {
-    ...mapActions(['fetchPageDetails', 'debouncedUpdatePageDetails', 'deletePage', 'addToast', 'fetchPages', 'setPages', 'setCurrentPage', 'fetchShifts', 'fetchShiftDetails']),
+    ...mapActions(['fetchPageDetails', 'debouncedUpdatePageDetails', 'deletePage', 'addToast', 'fetchClients' ,'fetchPages', 'setPages', 'setCurrentPage', 'fetchShifts', 'fetchShiftDetails']),
     toggleEditMode() {
       if (this.editMode) {
         if (this.hasChanges()) {
@@ -687,6 +776,48 @@ export default {
       };
     },
 
+    recordExists(recordsArray, identifier, value) {
+      return recordsArray.some(record => record[identifier] === value);
+    },
+
+    // Helper function to map numeric priority to string
+    getPriorityLabel(priority) {
+      switch (parseInt(priority)) {
+        case 4:
+          return "P4 - Low";
+        case 3:
+          return "P3 - moderate";
+        case 2:
+          return "P2 - high";
+        case 1:
+          return "P1 - Critical";
+        default:
+          return ""; // Default priority if undefined
+      }
+    },
+
+    //Incident state mapping
+    mapIncidentState(state) {
+      switch (parseInt(state)) {
+        case 8:
+          return "Cancelled";
+        case 7:
+          return "Closed";
+        case 6:
+          return "Resolved";
+        case 5:
+          return "Awaiting Third Party";
+        case 4:
+          return "Awaiting User Info";
+        case 2:
+          return "Active";
+        case 1:
+          return "New";
+        default:
+          return ""; // Default state if undefined
+      }
+    },
+
     //--Import incidents--
     async importIncidentRecords() {
       if (!this.jsonData) {
@@ -694,32 +825,156 @@ export default {
         return;
       }
 
-      if (!this.clientName) {
-        this.addToast({ message: 'Client name is required', type: 'danger' });
+      if (!this.selectedClient) {
+        this.addToast({ message: 'Client selection is required', type: 'danger' });
+        return;
+      }
+      console.log(this.selectedClient);
+
+      try {
+        console.log('Importing incidents:', this.jsonData);
+        this.jsonData.records.forEach(record => {
+          const newIncident = {
+            client: this.selectedClient,
+            incNumber: record.number || '',
+            status: this.mapIncidentState(record.incident_state), // Hardcoded for now
+            dateOpened: record.opened_at || '',
+            priority: this.getPriorityLabel(record.priority), 
+            mainProblem: record.short_description || 'No description',
+            notes: 'Test note', // Hardcoded note
+          };
+          // Add the mapped record to the incidents array
+          if (!this.recordExists(this.currentPage.records.incidents, 'incNumber', newIncident.incNumber)) {
+            this.currentPage.records.incidents.push(newIncident);
+          }
+        });
+
+        // Update the page details after importing the records
+        await this.debouncedUpdatePageDetails({ page: this.currentPage, source: this.$socket.id });
+        this.addToast({ message: `Incidents imported successfully`, type: 'success' });
+
+        // Reset data and close modal
+        this.jsonData = null;
+        this.clientName = '';
+        this.currentImportType = '';
+      } catch (error) {
+        console.error('Error importing incidents:', error);
+        this.addToast({ message: 'Error importing incidents', type: 'danger' });
+      }
+    },
+
+    
+    
+    //--Import problems--
+    async importProblemRecords() {
+      if (!this.jsonData) {
+        this.addToast({ message: 'No file uploaded', type: 'danger' });
+        return;
+      }
+
+      if (!this.selectedClient) {
+        this.addToast({ message: 'Client selection is required', type: 'danger' });
         return;
       }
 
       try {
-        // Ensure the incidents array exists
-        // if (!this.currentPage.records.incidents) {
-        //   this.$set(this.currentPage.records, 'incidents', []);
-        // }
-
-        // Iterate through the uploaded JSON data and map the fields
-        console.log('Importing incidents:', this.jsonData);
+        console.log('Importing problems:', this.jsonData);
         this.jsonData.records.forEach(record => {
-          const newIncident = {
-            client: this.clientName, // Use the client name entered by the user
-            incNumber: record.number || 'INC000000', // Map "number"s to "incNumber", defaulting if missing
-            status: 'Active', // Hardcoded for now
-            dateOpened: new Date().toISOString(), // Use current date for demo purposes
-            priority: 'P4 - Low', // Hardcoded priority for demo
-            mainProblem: record.short_description || 'No description', // Map "short_description" to "mainProblem"
+          const newProblem = {
+            client: this.selectedClient, // Use the client name entered by the user
+            prbNumber: record.number || '', // Map "number"s to "prbNumber", defaulting if missing
+            status: 'Evaluate', // Hardcoded for now
+            priority: this.getPriorityLabel(record.priority), // Hardcoded priority for demo
+            rca: record.short_description || '', // Map "short_description" to "mainProblem"
             notes: 'Test note', // Hardcoded note
           };
 
-          // Add the mapped record to the incidents array
-          this.currentPage.records.incidents.push(newIncident);
+          if (!this.recordExists(this.currentPage.records.problems, 'prbNumber', newProblem.prbNumber)) {
+            this.currentPage.records.problems.push(newProblem);
+          }
+        });
+
+        // Update the page details after importing the records
+        await this.debouncedUpdatePageDetails({ page: this.currentPage, source: this.$socket.id });
+        this.addToast({ message: `Incidents imported successfully`, type: 'success' });
+
+        // Reset data and close modal
+        this.jsonData = null;
+        this.clientName = '';
+        this.currentImportType = '';
+      } catch (error) {
+        console.error('Error importing incidents:', error);
+        this.addToast({ message: 'Error importing incidents', type: 'danger' });
+      }
+    },
+    //--Import changes--
+    async importChangeRecords() {
+      if (!this.jsonData) {
+        this.addToast({ message: 'No file uploaded', type: 'danger' });
+        return;
+      }
+
+      if (!this.selectedClient) {
+        this.addToast({ message: 'Client selection is required', type: 'danger' });
+        return;
+      }
+
+      try {
+        console.log('Importing changes:', this.jsonData);
+        this.jsonData.records.forEach(record => {
+          const newChange = {
+            client: this.selectedClient, // Use the client name entered by the user
+            chgNumber: record.number || '', // Map "number"s to "prbNumber", defaulting if missing
+            status: 'Authorize', // Hardcoded for now
+            startDate: record.start_date || '',
+            endDate: record.end_date || '',
+            notes: record.short_description || ''
+          };
+
+          if (!this.recordExists(this.currentPage.records.changes, 'chgNumber', newChange.chgNumber)) {
+            this.currentPage.records.changes.push(newChange);
+          }
+        });
+
+        // Update the page details after importing the records
+        await this.debouncedUpdatePageDetails({ page: this.currentPage, source: this.$socket.id });
+        this.addToast({ message: `Incidents imported successfully`, type: 'success' });
+
+        // Reset data and close modal
+        this.jsonData = null;
+        this.clientName = '';
+        this.currentImportType = '';
+      } catch (error) {
+        console.error('Error importing incidents:', error);
+        this.addToast({ message: 'Error importing incidents', type: 'danger' });
+      }
+    },
+    //--Import Service Requests--
+    async importRequestRecords() {
+      if (!this.jsonData) {
+        this.addToast({ message: 'No file uploaded', type: 'danger' });
+        return;
+      }
+
+      if (!this.selectedClient) {
+        this.addToast({ message: 'Client selection is required', type: 'danger' });
+        return;
+      }
+
+      try {
+        console.log('Importing service requests:', this.jsonData);
+        this.jsonData.records.forEach(record => {
+          const newRequest = {
+            client: this.selectedClient,
+            ritmNumber: record.number || '',
+            status: 'Draft',
+            short_description: record.short_description || '',
+            notes: ''
+          };
+
+          if (!this.recordExists(this.currentPage.records.serviceRequests, 'ritmNumber', newRequest.ritmNumber)) {
+            this.currentPage.records.serviceRequests.push(newRequest);
+          }
         });
 
         // Update the page details after importing the records
@@ -891,6 +1146,7 @@ export default {
     //const docId = this.currentPage.id;
     const docId = this.$route.params.id;
     this.fetchShifts();
+    this.fetchClients();
     const userName = localStorage.getItem('userName');
     console.log('DOC ID', docId);
     if (docId) {

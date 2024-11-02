@@ -94,7 +94,6 @@ export default {
         const clientData = await this.fetchClientSLAQuotas(clientId); 
         if (clientData && clientData.slaQuotas) {
           this.slaQuotasByClient[clientName] = clientData.slaQuotas;
-          console.log(clientName + clientId);
         } else {
           this.slaQuotasByClient[clientName] = {
             quota_P1: 180, // Default values if not found in DB
@@ -112,7 +111,6 @@ export default {
     },
     calculateSLAProgress(incident, clientName) {
       const slaQuotas = this.slaQuotasByClient[clientName] || {};
-      console.log(slaQuotas);
       const priorityMapping = {
         'P1 - Critical': slaQuotas.quota_P1,
         'P2 - high': slaQuotas.quota_P2,
@@ -126,7 +124,7 @@ export default {
       const currentDate = new Date();
       const elapsedTime = (currentDate - openDate) / (1000 * 60); // Time in minutes
       const progress = Math.min((elapsedTime / slaTime) * 100, 100);
-      console.log(`Client: ${clientName}, Priority: ${incident.priority}, SLA Time: ${slaTime}, Progress: ${progress}`);
+      
       return progress.toFixed(2);
     },
     slaProgressClass(incident, clientName) {

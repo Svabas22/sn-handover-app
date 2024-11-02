@@ -8,6 +8,8 @@
         </div>
         <div class="modal-body">
           <!-- Client Dropdown -->
+          <h5>SLA Quotas</h5>
+          <hr />
           <label for="client-select" class="form-label">Select Client</label>
           <select v-model="selectedClientId" @change="fetchSLAQuotas" id="client-select" class="form-select">
             <option v-for="client in clients" :value="client.id" :key="client.id">
@@ -19,28 +21,28 @@
           <div v-if="slaQuotas">
             <div class="mt-3">
               <label for="quotaP1" class="form-label">P1 Quota (Critical)</label>
-              <input v-model="slaQuotas.quota_P1" type="number" class="form-control" id="quotaP1" />
+              <input v-model="slaQuotas.quota_P1" type="number" class="form-control" id="quotaP1" :disabled="isEngineer"/>
             </div>
             <div class="mt-3">
               <label for="quotaP2" class="form-label">P2 Quota (High)</label>
-              <input v-model="slaQuotas.quota_P2" type="number" class="form-control" id="quotaP2" />
+              <input v-model="slaQuotas.quota_P2" type="number" class="form-control" id="quotaP2" :disabled="isEngineer"/>
             </div>
             <div class="mt-3">
               <label for="quotaP3" class="form-label">P3 Quota (Moderate)</label>
-              <input v-model="slaQuotas.quota_P3" type="number" class="form-control" id="quotaP3" />
+              <input v-model="slaQuotas.quota_P3" type="number" class="form-control" id="quotaP3" :disabled="isEngineer"/>
             </div>
             <div class="mt-3">
               <label for="quotaP4" class="form-label">P4 Quota (Low)</label>
-              <input v-model="slaQuotas.quota_P4" type="number" class="form-control" id="quotaP4" />
+              <input v-model="slaQuotas.quota_P4" type="number" class="form-control" id="quotaP4" :disabled="isEngineer"/>
             </div>
           </div>
-
+        <hr />
         </div>
         <div class="modal-footer">
           <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
           <button type="button" class="btn btn-primary" @click="saveChanges">Save changes</button>
         </div>
-      </div>
+      </div>  
     </div>
   </div>
 </template>
@@ -54,14 +56,17 @@ export default {
     return {
       selectedClientId: null,
       slaQuotas: { quota_P1: '', quota_P2: '', quota_P3: '', quota_P4: '' },
+      userProfile: { role: localStorage.getItem('roles') }
     };
   },
   computed: {
-    ...mapState(['clients']), 
+    ...mapState(['clients']),
+    isEngineer() {
+      return this.userProfile.role === 'Engineer';
+    }
   },
   methods: {
     ...mapActions(['fetchClientSLAQuotas', 'updateClientSLAQuotas', 'addToast']),
-
     openSettingsModal() {
       const modal = new bootstrap.Modal(document.getElementById('settingsModal'));
       modal.show();
