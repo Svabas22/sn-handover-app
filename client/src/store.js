@@ -9,7 +9,9 @@ const store = createStore({
   state: {
     pages: [],
     shifts: [],
-    currentPage: null,
+    currentPage: {
+      lastEditedBy: '', // Track the last editor
+    },
     toasts: [],
     toastId: 0,
     searchResults: [],
@@ -25,7 +27,10 @@ const store = createStore({
       state.pages = pages;
     },
     setCurrentPage(state, page) {
-      state.currentPage = page;
+      state.currentPage = {
+        ...page,
+        lastEditedBy: page.lastEditedBy || 'Unknown' // Assign lastEditedBy, default to 'Unknown' if missing
+      };
     },
     addPage(state, page) {
       state.pages.push(page);
@@ -207,12 +212,13 @@ const store = createStore({
     },
     debouncedUpdatePageDetails: debounce(async function ({ commit }, { page, source }) {
       try {
+        const userName = localStorage.getItem('user') || 'Unknown';
         const response = await fetch(`/api/records/${page.id}`, {
           method: 'PUT',
           headers: {
             'Content-Type': 'application/json'
           },
-          body: JSON.stringify({ ...page, source })
+          body: JSON.stringify({ ...page, source, lastEditedBy: userName })
         });
         if (!response.ok) {
           throw new Error('Network response was not ok');
@@ -374,7 +380,37 @@ const store = createStore({
       } catch (error) {
         console.error('Error updating client SLA quotas:', error);
       }
-    }            
+    },
+    async createNewClient({ commit }, newClient) {
+      try {
+        const response = await fetch('/api/clients', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(newClient),
+        });
+    
+        if (response.status === 409) {
+          // Handle duplicate client error
+          const errorData = await response.json();
+          commit('addToast', { message: errorData.error || 'Client with this name already exists.', type: 'error' });
+          return;
+        }
+    
+        if (!response.ok) {
+          throw new Error('Failed to add new client');
+        }
+    
+        const addedClient = await response.json();
+        commit('addToast', { message: 'New client added successfully', type: 'success' });
+        return addedClient;
+      } catch (error) {
+        console.error('Error adding new client:', error);
+        commit('addToast', { message: 'Failed to add new client', type: 'error' });
+        throw error; // rethrow the error if additional handling is needed elsewhere
+      }
+    }           
   },
 });
 

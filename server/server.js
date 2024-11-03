@@ -10,7 +10,7 @@ const session = require('express-session');
 const http = require('http');
 const { Server } = require("socket.io");
 const cookieParser = require('cookie-parser');
-const morgan = require('morgan');
+const { v4: uuidv4 } = require('uuid');
 const redis = require('redis');
 let usersOnPage = {};
 const RedisStore = require('connect-redis').default;
@@ -274,7 +274,6 @@ app.post('/api/copy-handover', async (req, res) => {
       newDocument.title = `Handover ${newDocument.date} - ${today.getHours() >= 3 && today.getHours() < 15 ? 'Day' : 'Night'}`;
 
       const { resource: createdItem } = await container.items.create(newDocument);
-      //socket.broadcast.emit('pageCreated', newPage);
       res.status(200).json(createdItem);
       io.emit('pageCreated', createdItem);
     } else {
@@ -331,12 +330,17 @@ app.get('/api/records/:id', async (req, res) => {
 
 app.put('/api/records/:id', async (req, res) => {
   const pageId = req.params.id;
-  const updatedDocument = req.body;
+  const { lastEditedBy, ...updatedData } = req.body;
 
   try {
     if (!container) {
       throw new Error('Cosmos DB container is not initialized');
     }
+
+    const updatedDocument = {
+      ...updatedData,
+      lastEditedBy, // Include lastEditedBy in the updated document
+    };
     const partitionKey = updatedDocument.pageId;
     const { resource: doc } = await container.item(pageId, partitionKey).replace(updatedDocument);
     res.status(200).json(doc);
@@ -512,6 +516,40 @@ app.put('/api/clients/:clientId', async (req, res) => {
   }
 });
 
+app.post('/api/clients', async (req, res) => {
+  const { client, slaQuotas } = req.body;
+
+  if (!client || !slaQuotas) {
+    return res.status(400).json({ error: 'Client name and SLA quotas are required.' });
+  }
+
+  const newClient = {
+    id: uuidv4(),
+    client,
+    slaQuotas,
+  };
+
+  try {
+    const { resources: existingClients } = await clientsContainer.items
+      .query({
+        query: 'SELECT * FROM c WHERE c.client = @client',
+        parameters: [{ name: '@client', value: client }]
+      })
+      .fetchAll();
+
+    if (existingClients.length > 0) {
+      return res.status(409).json({ error: 'A client with this name already exists.' });
+    }
+
+    // Add new client to Cosmos DB
+    const { resource: createdClient } = await clientsContainer.items.create(newClient);
+    res.status(201).json(createdClient); // Send back the created client data as confirmation
+    io.emit('clientCreated', createdClient);
+  } catch (error) {
+    console.error('Error creating new client:', error);
+    res.status(500).json({ error: 'Failed to create new client.' });
+  }
+});
 
 
 

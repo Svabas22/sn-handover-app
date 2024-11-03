@@ -3,6 +3,7 @@
     <div v-if="currentPage" class="main-container">
       <div class="header">
         <h1>{{ currentPage.title }}</h1>
+        <p class="text-muted fst-italic">Last edited by: {{ currentPage.lastEditedBy }}</p>
         <div :class="{'dropwdowns-opt': true, 'disabled': !isEngineer}">
           <div class="dropdown-add">
             <button class="btn btn-link text-decoration-none" id="dropdownMenuButton" data-bs-toggle="dropdown" aria-expanded="false">
@@ -635,10 +636,11 @@ export default {
   data() {
     return {
       editMode: false,
-      userProfile: { role: localStorage.getItem('roles') },
+      userProfile: { role: localStorage.getItem('roles'), name: localStorage.getItem('user') },
       originalPageState: null,
       usersOnPage: [],
       currentImportType: '',
+      lastEditedBy: '',
       jsonData: null,
       selectedClient: '',
       newIncident: {
