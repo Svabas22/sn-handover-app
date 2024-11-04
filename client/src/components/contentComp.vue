@@ -3,7 +3,7 @@
     <div v-if="currentPage" class="main-container">
       <div class="header">
         <h1>{{ currentPage.title }}</h1>
-        <p class="text-muted fst-italic">Last edited by: {{ currentPage.lastEditedBy }}</p>
+        <p class="text-muted fst-italic" style="margin-top: 20px;">Last edited by: {{ currentPage.lastEditedBy }}</p>
         <div :class="{'dropwdowns-opt': true, 'disabled': !isEngineer}">
           <div class="dropdown-add">
             <button class="btn btn-link text-decoration-none" id="dropdownMenuButton" data-bs-toggle="dropdown" aria-expanded="false">

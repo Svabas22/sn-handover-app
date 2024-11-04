@@ -281,6 +281,7 @@ const store = createStore({
         }
         const data = await response.json();
         commit('setCurrentShift', data);
+        return data;
       } catch (error) {
         console.error('Error fetching shift details:', error);
         commit('addToast', { message: `Fetch shift details error: ${error.message}`, type: 'danger' });

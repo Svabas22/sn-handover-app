@@ -420,12 +420,13 @@ app.post('/api/shifts', async (req, res) => {
 app.put('/api/shifts/:id', async (req, res) => {
   const shiftId = req.params.id;
   const updatedShift = req.body;
+  console.log(updatedShift);
   try {
     if (!shiftsContainer) {
       throw new Error('Shifts container is not initialized');
     }
     const partitionKey = updatedShift.id;
-    const { resource: doc } = await shiftsContainer.item(shiftId, partitionKey).replace(updatedShift);
+    const { resource: doc } = await shiftsContainer.item(shiftId).replace(updatedShift);
     res.status(200).json(doc);
   } catch (error) {
     res.status(500).json({ error: error.message });

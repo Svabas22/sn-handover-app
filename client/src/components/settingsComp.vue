@@ -72,10 +72,37 @@
                 <button type="submit" class="btn btn-primary mt-3">Save New Client</button>
               </form>
             </div>
+            <hr />
 
           </div>
           <!-- End of Editing SLA Quotas Form -->
+
+          <!-- Shifts Form -->
+          <div class="edit-shift">
+            <h5>Edit Shift details</h5>
+            <hr />
+            <label for="shift-select" class="form-label">Select Shift</label>
+            <select v-model="selectedShiftId" @change="fetchShiftDetails" id="shift-select" class="form-select">
+              <option v-for="shift in shifts" :value="shift.id" :key="shift.id">
+                {{ shift.title }}
+              </option>
+            </select>
+
+            <!-- Engineer Names Form -->
+            <div v-if="currentShift && currentShift.engineers.length">
+              <form @submit.prevent="saveShiftChanges">
+                <div v-for="(engineer, index) in currentShift.engineers.slice(0, 4)" :key="index" class="mt-3">
+                  <label :for="'engineer-' + index" class="form-label">Engineer {{ index + 1 }} name</label>
+                  <input v-model="engineer.name" type="text" class="form-control" :id="'engineer-' + index" placeholder="Enter engineer name" :disabled="isEngineer"/>
+                </div>
+                <button type="submit" class="btn btn-primary mt-3">Save Shift Changes</button>
+              </form>
+            </div>
+          </div>
+
+          <hr />
         </div>
+          <hr />
         <div class="modal-footer">
           <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
           
@@ -93,6 +120,8 @@ export default {
   data() {
     return {
       selectedClientId: null,
+      selectedShiftId: null,
+      currentShift: { title: '', engineers: [{ name: '' }, { name: '' }, { name: '' }, { name: '' }] },
       slaQuotas: { quota_P1: '', quota_P2: '', quota_P3: '', quota_P4: '' },
       newClientName: '',
       newClientQuotas: { quota_P1: '', quota_P2: '', quota_P3: '', quota_P4: '' },
@@ -101,12 +130,13 @@ export default {
   },
   computed: {
     ...mapState(['clients']),
+    ...mapState(['shifts']),
     isEngineer() {
       return this.userProfile.role === 'Engineer';
     }
   },
   methods: {
-    ...mapActions(['fetchClientSLAQuotas', 'updateClientSLAQuotas', 'addToast']),
+    ...mapActions(['fetchClientSLAQuotas', 'updateClientSLAQuotas', 'fetchShifts', 'fetchShiftDetails', 'updateShiftDetails', 'addToast']),
     openSettingsModal() {
       const modal = new bootstrap.Modal(document.getElementById('settingsModal'));
       modal.show();
@@ -133,6 +163,23 @@ export default {
         this.addToast({ message: 'SLA Quotas updated successfully', type: 'success' });
       } catch (error) {
         this.addToast({ message: 'Failed to update SLA Quotas', type: 'error' });
+      }
+    },
+    async fetchShiftDetails() {
+      try {
+        const shiftData = await this.$store.dispatch('fetchShiftDetails', this.selectedShiftId);
+        this.currentShift = shiftData || { title: '', engineers: [{ name: '' }, { name: '' }, { name: '' }, { name: '' }] };
+      } catch (error) {
+        this.addToast({ message: 'Failed to fetch shift details', type: 'danger' });
+      }
+    },
+
+    async saveShiftChanges() {
+      try {
+        await this.$store.dispatch('updateShiftDetails', this.currentShift);
+        this.addToast({ message: 'Shift updated successfully', type: 'success' });
+      } catch (error) {
+        this.addToast({ message: 'Failed to update shift', type: 'danger' });
       }
     },
 
@@ -166,6 +213,7 @@ export default {
 
   mounted() {
     this.$store.dispatch('fetchClients');
+    this.$store.dispatch('fetchShifts');
   },
 };
 </script>
