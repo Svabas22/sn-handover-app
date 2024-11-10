@@ -4,9 +4,9 @@
       <div class="header">
         <h1>{{ currentPage.title }}</h1>
         <p class="text-muted fst-italic" style="margin-top: 20px;">Last edited by: {{ currentPage.lastEditedBy }}</p>
-        <div :class="{'dropwdowns-opt': true, 'disabled': !isEngineer}">
-          <div class="dropdown-add">
-            <button class="btn btn-link text-decoration-none" id="dropdownMenuButton" data-bs-toggle="dropdown" aria-expanded="false">
+        <div :class="{'dropwdowns-opt': true}">
+          <div :class="{'dropdown-add': true, 'disabled': !isEngineer}">
+            <button class="btn btn-link text-decoration-none" id="dropdownMenuButton" data-bs-toggle="dropdown" aria-expanded="false" :disabled="!isEngineer">
               <i class="bi bi-plus-lg"></i>
             </button>
             <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="dropdownMenuButton">
@@ -32,9 +32,26 @@
               <i class="bi bi-three-dots-vertical"></i>
             </button>
             <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="dropdownMenuButton">
-              <li><a class="dropdown-item" @click="toggleEditMode">{{ editMode ? 'Save' : 'Edit' }}</a></li>
-              <li><hr class="dropdown-divider"></li>
-              <li><a id="remove-btn" href="#" :class="{ 'dropdown-item': true,'disabled': isEngineer}" data-bs-toggle="modal" data-bs-target="#removePageModal">Remove page</a></li>
+              <li>
+                <a :class="{ 'dropdown-item': true, 'disabled': !isEngineer || (isLocked && !editMode) }"
+                  @click="toggleEditMode">
+                  {{ editMode ? 'Save' : 'Edit' }}
+                </a>
+              </li>
+              <li>
+                <hr class="dropdown-divider">
+              </li>
+              <li>
+                <a
+                  id="remove-btn"
+                  href="#"
+                  :class="{ 'dropdown-item': true, 'disabled': !isEngineer || editMode }"
+                  data-bs-toggle="modal"
+                  data-bs-target="#removePageModal"
+                >
+                  Remove page
+                </a>
+              </li>
             </ul>
           </div>
         </div>
@@ -690,17 +707,27 @@ export default {
       const hours = String(today.getHours()).padStart(2, '0');
       const minutes = String(today.getMinutes()).padStart(2, '0');
       return `${year}-${month}-${day}T${hours}:${minutes}`;
-    }
+    },
+    isLocked() {
+      return this.$store.state.isPageLocked && this.$store.state.lockedPageId === this.currentPage.id;
+    },
+
   },
   methods: {
     ...mapActions(['fetchPageDetails', 'debouncedUpdatePageDetails', 'deletePage', 'addToast', 'fetchClients' ,'fetchPages', 'setPages', 'setCurrentPage', 'fetchShifts', 'fetchShiftDetails']),
-    toggleEditMode() {
+    async toggleEditMode() {
+
       if (this.editMode) {
+        // If saving, update the page details and unlock it for others
         if (this.hasChanges()) {
-          this.debouncedUpdatePageDetails({ page: this.currentPage, source: this.$socket.id });
+          await this.debouncedUpdatePageDetails({ page: this.currentPage, source: this.$socket.id });
         }
+        await this.$store.dispatch('debouncedUnlockEditMode', { pageId: this.currentPage.id, pageTitle: this.currentPage.title, userName: this.userProfile.name });
       } else {
-        this.originalPageState = JSON.stringify(this.currentPage); // Save the original state
+        // If entering edit mode, lock the page for others
+        if (!this.isLocked) {
+          await this.$store.dispatch('debouncedLockEditMode', { pageId: this.currentPage.id, pageTitle: this.currentPage.title, userName: this.userProfile.name });
+        }
       }
       this.editMode = !this.editMode;
     },
@@ -1138,11 +1165,26 @@ export default {
     },
     handlePageUpdated(data) {
       console.log('Page updated event received:', data);
+
+      // Check if the current page is the one being updated and if the version has changed
       if (this.currentPage && this.currentPage.id === data.id) {
-        console.log('Updating current page:', data);
-        this.setCurrentPage(data);
+        if (this.currentPage.version !== data.version) {
+          console.log('Version conflict detected.');
+
+          // Notify the user about the conflict and prompt to reload
+          if (confirm("This page has been updated by another user. Would you like to reload the latest version?")) {
+            this.fetchPageDetails(data.id); // Fetch and reload the latest version of the page
+          } else {
+            // Optionally, you could add a toast notification for users who choose not to reload
+            this.addToast({ message: 'You are viewing an outdated version of the page.', type: 'warning' });
+          }
+        } else {
+          // If there’s no version conflict, update the current page as usual
+          this.setCurrentPage(data);
+          console.log('Current page updated without conflict.');
+        }
       }
-    },
+    }
   },
   created() {
     //const docId = this.currentPage.id;

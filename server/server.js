@@ -6,6 +6,7 @@ if (process.env.ENVR === 'dev') {
 const express = require('express');
 const cors = require('cors');
 const path = require('path');
+const lockedPages = {};
 const session = require('express-session');
 const http = require('http');
 const { Server } = require("socket.io");
@@ -135,18 +136,31 @@ io.on('connection', (socket) => {
     }
 
     usersOnPages[pageId].push({ socketId, userName, pageId });
-    //socket.join(pageId);
+    socket.join(pageId); // Join the user to the page-specific room
     console.log('Users on page after viewPage:', usersOnPages[pageId]);
     io.to(pageId).emit('usersOnPage', usersOnPages[pageId]);
-    
   });
   socket.on('leavePage', ({ pageId }) => {
     // Remove the user from the page
     if (usersOnPages[pageId]) {
       usersOnPages[pageId] = usersOnPages[pageId].filter(user => user.socketId !== socket.id);
-
-      // Emit the updated users list to the room
       io.to(pageId).emit('usersOnPage', usersOnPages[pageId]);
+    }
+  });
+
+  socket.on('lockEditMode', ({ pageId, userName, pageTitle }) => {
+    if (!lockedPages[pageId]) {
+      lockedPages[pageId] = userName;
+      io.to(pageId).emit('lockEditMode', { pageId, userName, pageTitle });
+    } else {
+      socket.emit('pageAlreadyLocked', { pageId, userName: lockedPages[pageId], pageTitle });
+    }
+  });
+
+  socket.on('unlockEditMode', ({ pageId, userName, pageTitle }) => {
+    if (lockedPages[pageId] === userName) {
+      delete lockedPages[pageId];
+      io.to(pageId).emit('unlockEditMode', { pageId, pageTitle });
     }
   });
 
@@ -164,7 +178,13 @@ io.on('connection', (socket) => {
   socket.on('disconnect', () => {
     console.log('Client disconnected');
 
-    // Remove the user from all pages
+    Object.keys(lockedPages).forEach(pageId => {
+      if (lockedPages[pageId] === socket.id) {
+        delete lockedPages[pageId];
+        io.to(pageId).emit('unlockEditMode', { pageId });
+      }
+    });
+
     Object.keys(usersOnPages).forEach((pageId) => {
       usersOnPages[pageId] = usersOnPages[pageId].filter(user => user.socketId !== socket.id);
       io.to(pageId).emit('usersOnPage', usersOnPages[pageId]);

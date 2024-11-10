@@ -11,6 +11,7 @@ const store = createStore({
     shifts: [],
     currentPage: {
       lastEditedBy: '', // Track the last editor
+      version: null
     },
     toasts: [],
     toastId: 0,
@@ -18,6 +19,9 @@ const store = createStore({
     currentShift: null,
     incidents: [],
     usersOnPage: [],
+    isPageLocked: false,
+    lockedByUser: null,
+    lockedPageId: null,
     clients: [],
     slaQuotas: {},
     lastUpdateSource: 'server', // Track the source of the last update
@@ -29,8 +33,12 @@ const store = createStore({
     setCurrentPage(state, page) {
       state.currentPage = {
         ...page,
-        lastEditedBy: page.lastEditedBy || 'Unknown' // Assign lastEditedBy, default to 'Unknown' if missing
+        lastEditedBy: page.lastEditedBy || 'Unknown',
+        version: page.version || new Date().toISOString(), // Set the page version
       };
+    },
+    updatePageVersion(state, version) {
+      state.currentPage.version = version; // Update version after saving
     },
     addPage(state, page) {
       state.pages.push(page);
@@ -84,6 +92,12 @@ const store = createStore({
         state.usersOnPage = users;
       }
     },
+    setEditLock(state, { isLocked, userName, pageId, pageTitle }) {
+      state.isPageLocked = isLocked;
+      state.lockedByUser = isLocked ? userName : null;
+      state.lockedPageId = isLocked ? pageId : null;
+      state.lockedPageTitle = isLocked ? pageTitle : null;
+    },
     setSearchResults(state, results) {
       state.searchResults = results;
     },
@@ -122,6 +136,19 @@ const store = createStore({
         throw error;
       }
     },
+    debouncedLockEditMode: debounce(async function ({ state }, { pageId, userName, pageTitle }) {
+      console.log(pageId, userName, pageTitle);
+      if (!state.isPageLocked || state.lockedPageId !== pageId) {
+        socket.emit('lockEditMode', { pageId, userName, pageTitle });
+      }
+    }, 200),
+
+    debouncedUnlockEditMode: debounce(async function ({ commit, state }, { pageId, userName, pageTitle }) {
+      if (state.isPageLocked && state.lockedPageId === pageId) {
+        socket.emit('unlockEditMode', { pageId, userName, pageTitle });
+        commit('setEditLock', { isLocked: false, userName: null, pageId: null, pageTitle: null });
+      }
+    }, 200),
     async fetchPages({ commit, dispatch }) {
 
       try {
@@ -211,7 +238,9 @@ const store = createStore({
       }
     },
     debouncedUpdatePageDetails: debounce(async function ({ commit }, { page, source }) {
+      
       try {
+        
         const userName = localStorage.getItem('user') || 'Unknown';
         const response = await fetch(`/api/records/${page.id}`, {
           method: 'PUT',
@@ -226,6 +255,7 @@ const store = createStore({
         const data = await response.json();
         commit('setCurrentPage', data);
         commit('updatePage', data);
+        commit('updatePageVersion', data.version);
       } catch (error) {
         console.error('Error updating page details:', error);
         commit('addToast', { message: `Update page error: ${error.message}`, type: 'danger' });
@@ -394,8 +424,7 @@ const store = createStore({
     
         if (response.status === 409) {
           // Handle duplicate client error
-          const errorData = await response.json();
-          commit('addToast', { message: errorData.error || 'Client with this name already exists.', type: 'error' });
+          commit('addToast', { message: 'Client with this name already exists.', type: 'danger' });
           return;
         }
     
@@ -464,7 +493,31 @@ socket.on('pageDeleted', (data) => {
   
 });
 
+socket.on('lockEditMode', (data) => {
+  console.log('Lock edit mode event received:', data);
+  store.commit('setEditLock', { isLocked: true, userName: data.userName, pageId: data.pageId, pageTitle: data.pageTitle });
+  store.commit('addToast', {
+    message: `${data.userName} is now editing ${data.pageTitle || 'this page'}`,
+    type: 'info'
+  });
+});
 
+socket.on('unlockEditMode', ({ pageId, pageTitle }) => {
+  console.log(pageId);
+  store.commit('setEditLock', { isLocked: false, userName: null, pageId: null, pageTitle: null});
+  store.commit('addToast', {
+    message: `Page ${pageTitle} is now unlocked.`,
+    type: 'info'
+  });
+});
+
+socket.on('pageAlreadyLocked', ({ pageId, userName, pageTitle }) => {
+  console.log(pageId);
+  store.commit('addToast', {
+    message: `Page ${pageTitle} is already being edited by ${userName}.`,
+    type: 'error'
+  });
+});
 
 
 export default store;
