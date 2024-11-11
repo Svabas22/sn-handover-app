@@ -27,7 +27,7 @@ const app = express();
 const server = http.createServer(app);
 const io = new Server(server, {
   cors: {
-    origin: ['https://sn-handover-app.azurewebsites.net'],
+    origin: ['http://localhost:3000', 'https://sn-handover-app.azurewebsites.net'],
     methods: ['GET', 'POST'],
     credentials: true
   },
@@ -65,11 +65,13 @@ async function initRedisSubscriber() {
 
 initRedisSubscriber().catch(console.error);
 
+const allowedOrigins = ['http://localhost:3000', 'https://sn-handover-app.azurewebsites.net'];
+
 app.use(cors({
-  origin: ['http://localhost:3000', 'https://sn-handover-app.azurewebsites.net'],
+  origin: allowedOrigins,
   methods: ['GET', 'POST', 'PUT', 'DELETE'],
-  allowedHeaders: ["Origin", "X-Requested-With", "Content-Type", "Accept", "Authorization"],
-  credentials: true
+  credentials: true,
+  optionsSuccessStatus: 200 // For legacy browser support
 }));
 
 app.use(express.json());
@@ -90,6 +92,7 @@ app.use(session({
 
 
 app.use(express.static(path.join(__dirname, '../client/dist')));
+app.use('/api', isAuthenticated);
 app.use('/', indexRouter);
 app.use('/users', usersRouter);
 app.use('/auth', authRouter);
@@ -202,7 +205,7 @@ app.post('/api/real-time-updates', (req, res) => {
 });
 
 app.get('/api/search', async (req, res) => {
-  const searchQuery = req.query.q;
+  const searchQuery = req.query.q.toLowerCase();
   if (!container) {
     return res.status(500).json({ error: 'Cosmos DB container is not initialized' });
   }
@@ -217,13 +220,13 @@ app.get('/api/search', async (req, res) => {
           EXISTS (SELECT VALUE chg FROM chg IN c.records.changes WHERE chg.chgNumber = @searchQuery) OR
           EXISTS (SELECT VALUE prb FROM prb IN c.records.problems WHERE prb.prbNumber = @searchQuery) OR
           EXISTS (SELECT VALUE sr FROM sr IN c.records.serviceRequests WHERE sr.ritmNumber = @searchQuery) OR
-          EXISTS (SELECT VALUE mainPrbInc FROM mainPrbInc IN c.records.incidents WHERE Contains(mainPrbInc.mainProblem, @searchQuery)) OR
-          EXISTS (SELECT VALUE notesInc FROM notesInc IN c.records.incidents WHERE Contains(notesInc.notes, @searchQuery)) OR
-          EXISTS (SELECT VALUE notesPrb FROM notesPrb IN c.records.problems WHERE Contains(notesPrb.notes, @searchQuery)) OR
-          EXISTS (SELECT VALUE rcaPrb FROM rcaPrb IN c.records.problems WHERE Contains(rcaPrb.rca, @searchQuery)) OR
-          EXISTS (SELECT VALUE notesChg FROM notesChg IN c.records.changes WHERE Contains(notesChg.notes, @searchQuery)) OR
-          EXISTS (SELECT VALUE notesSr FROM notesSr IN c.records.serviceRequests WHERE Contains(notesSr.notes, @searchQuery)) OR
-          EXISTS (SELECT VALUE dscSr FROM dscSr IN c.records.serviceRequests WHERE Contains(dscSr.short_description, @searchQuery))
+          EXISTS (SELECT VALUE mainPrbInc FROM mainPrbInc IN c.records.incidents WHERE Contains(LOWER(mainPrbInc.mainProblem), @searchQuery)) OR
+          EXISTS (SELECT VALUE notesInc FROM notesInc IN c.records.incidents WHERE Contains(LOWER(notesInc.notes), @searchQuery)) OR
+          EXISTS (SELECT VALUE notesPrb FROM notesPrb IN c.records.problems WHERE Contains(LOWER(notesPrb.notes), @searchQuery)) OR
+          EXISTS (SELECT VALUE rcaPrb FROM rcaPrb IN c.records.problems WHERE Contains(LOWER(rcaPrb.rca), @searchQuery)) OR
+          EXISTS (SELECT VALUE notesChg FROM notesChg IN c.records.changes WHERE Contains(LOWER(notesChg.notes), @searchQuery)) OR
+          EXISTS (SELECT VALUE notesSr FROM notesSr IN c.records.serviceRequests WHERE Contains(LOWER(notesSr.notes), @searchQuery)) OR
+          EXISTS (SELECT VALUE dscSr FROM dscSr IN c.records.serviceRequests WHERE Contains(LOWER(dscSr.short_description), @searchQuery))
       `,
       parameters: [{ name: "@searchQuery", value: searchQuery }]
     };

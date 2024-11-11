@@ -44,7 +44,6 @@ class AuthProvider {
                 redirectUri: options.redirectUri,
             };
 
-            console.log('PKCE Codes set in session:', req.session.pkceCodes);
 
             if (!this.msalConfig.auth.cloudDiscoveryMetadata || !this.msalConfig.auth.authorityMetadata) {
 
@@ -67,46 +66,6 @@ class AuthProvider {
         };
     }
 
-    // acquireToken(options = {}) {
-    //     return async (req, res, next) => {
-    //         try {
-    //             const msalInstance = this.getMsalInstance(this.msalConfig);
-    //             if (req.session.tokenCache) {
-    //                 msalInstance.getTokenCache().deserialize(req.session.tokenCache);
-    //             }
-
-    //             console.log(req.session.account);
-
-    //             const tokenResponse = await msalInstance.acquireTokenSilent({
-    //                 account: req.session.account,
-    //                 scopes: options.scopes || [],
-    //             });
-    //             req.session.tokenCache = msalInstance.getTokenCache().serialize();
-    //             req.session.accessToken = tokenResponse.accessToken;
-    //             req.session.idToken = tokenResponse.idToken;
-    //             req.session.account = tokenResponse.account;
-
-    //             req.session.user = {
-    //                 username: tokenResponse.account.username,
-    //                 name: tokenResponse.account.name,
-    //                 email: tokenResponse.account.username
-    //             };
-
-    //             res.redirect(options.successRedirect);
-    //         } catch (error) {
-    //             if (error instanceof msal.InteractionRequiredAuthError) {
-    //                 return this.login({
-    //                     scopes: options.scopes || [],
-    //                     redirectUri: options.redirectUri,
-    //                     successRedirect: options.successRedirect || '/',
-    //                 })(req, res, next);
-    //             }
-
-    //             next(error);
-    //         }
-    //     };
-    // }
-
     handleRedirect(options = {}) {
         return async (req, res, next) => {
             if (!req.body || !req.body.state) {
@@ -126,7 +85,6 @@ class AuthProvider {
                 if (req.session.tokenCache) {
                     msalInstance.getTokenCache().deserialize(req.session.tokenCache);
                 }
-                console.log('Session data before using PKCE Codes:', req.session.pkceCodes.verifier);
 
                 const tokenResponse = await msalInstance.acquireTokenByCode(authCodeRequest, req.body);
 

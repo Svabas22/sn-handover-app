@@ -122,6 +122,7 @@ const store = createStore({
           headers: {
             'Content-Type': 'application/json',
           },
+          credentials: 'include'
         });
   
         if (response.ok) {
@@ -153,7 +154,7 @@ const store = createStore({
 
       try {
         console.log(localStorage.getItem('user'));
-        const response = await fetch('/api/records');
+        const response = await fetch('/api/records', { credentials: 'include' });
         if (!response.ok) {
           throw new Error('Network response was not ok');
         }
@@ -187,7 +188,7 @@ const store = createStore({
       }
 
       try {
-        const response = await fetch(`/api/records/${pageId}`);
+        const response = await fetch(`/api/records/${pageId}`, { credentials: 'include' });
         if (!response.ok) {
           throw new Error(`HTTP status: ${response.status}`);
         }
@@ -226,7 +227,7 @@ const store = createStore({
     },
     async fetchLatestPage({ commit }) {
       try {
-        const response = await fetch('/api/latest-page');
+        const response = await fetch('/api/latest-page', { credentials: 'include' });
         if (!response.ok) {
           throw new Error('Network response was not ok');
         }
@@ -247,7 +248,8 @@ const store = createStore({
           headers: {
             'Content-Type': 'application/json'
           },
-          body: JSON.stringify({ ...page, source, lastEditedBy: userName })
+          body: JSON.stringify({ ...page, source, lastEditedBy: userName }),
+          credentials: 'include'
         });
         if (!response.ok) {
           throw new Error('Network response was not ok');
@@ -263,7 +265,7 @@ const store = createStore({
     }, 200),
     debouncedCopyHandover: debounce(async function ({ commit }) {
       try {
-        const response = await fetch('/api/copy-handover', { method: 'POST' });
+        const response = await fetch('/api/copy-handover', { method: 'POST', credentials: 'include' });
         const newPage = await response.json();
         if (!response.ok) {
           throw new Error(`HTTP error! status: ${response.status}`);
@@ -279,7 +281,7 @@ const store = createStore({
 
     debouncedCreateHandoverTemplate: debounce(async function ({ commit }) {
       try {
-        const response = await fetch('/api/copy-template', { method: 'POST' });
+        const response = await fetch('/api/copy-template', { method: 'POST', credentials: 'include' });
         const newPage = await response.json();
         //commit('addPage', newPage);
         commit('setCurrentPage', newPage);
@@ -292,7 +294,7 @@ const store = createStore({
     // shift management
     async fetchShifts({ commit }) {
       try {
-        const response = await fetch('/api/shifts');
+        const response = await fetch('/api/shifts', { credentials: 'include' });
         if (!response.ok) {
           throw new Error('Network response was not ok');
         }
@@ -305,7 +307,7 @@ const store = createStore({
     },
     async fetchShiftDetails({ commit }, shiftId) {
       try {
-        const response = await fetch(`/api/shifts/${shiftId}`);
+        const response = await fetch(`/api/shifts/${shiftId}`, { credentials: 'include' });
         if (!response.ok) {
           throw new Error(`HTTP status: ${response.status}`);
         }
@@ -324,7 +326,8 @@ const store = createStore({
           headers: {
             'Content-Type': 'application/json'
           },
-          body: JSON.stringify(shift)
+          body: JSON.stringify(shift),
+          credentials: 'include'
         });
         if (!response.ok) {
           throw new Error('Network response was not ok');
@@ -345,7 +348,8 @@ const store = createStore({
           headers: {
             'Content-Type': 'application/json'
           },
-          body: JSON.stringify(shift)
+          body: JSON.stringify(shift),
+          credentials: 'include'
         });
         if (!response.ok) {
           throw new Error('Network response was not ok');
@@ -361,7 +365,7 @@ const store = createStore({
     },
     async fetchClients({ commit }) {
       try {
-        const response = await fetch('/api/clients');
+        const response = await fetch('/api/clients', { credentials: 'include' });
         const clients = await response.json();
         commit('setClients', clients);
       } catch (error) {
@@ -370,7 +374,7 @@ const store = createStore({
     },
     async fetchClientSLAQuotas({ commit }, clientId) {
       try {
-        const response = await fetch(`/api/clients/${clientId}`);
+        const response = await fetch(`/api/clients/${clientId}`, { credentials: 'include' });
         
         // Check the raw response first
         const rawData = await response.text();
@@ -400,6 +404,7 @@ const store = createStore({
             'Content-Type': 'application/json',
           },
           body: JSON.stringify({ slaQuotas }),
+          credentials: 'include'
         });
         if (!response.ok) {
           throw new Error('Failed to update client SLA quotas');
@@ -420,6 +425,7 @@ const store = createStore({
             'Content-Type': 'application/json',
           },
           body: JSON.stringify(newClient),
+          credentials: 'include'
         });
     
         if (response.status === 409) {
