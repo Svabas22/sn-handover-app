@@ -24,19 +24,19 @@
               <form @submit.prevent="saveSlaChanges">
                 <div class="mt-3">
                   <label for="quotaP1" class="form-label">P1 Quota (Critical)</label>
-                  <input v-model="slaQuotas.quota_P1" type="number" class="form-control" id="quotaP1" :disabled="isEngineer"/>
+                  <input v-model="slaQuotas.quota_P1" type="number" class="form-control" id="quotaP1" :disabled="isEngineer" required/>
                 </div>
                 <div class="mt-3">
                   <label for="quotaP2" class="form-label">P2 Quota (High)</label>
-                  <input v-model="slaQuotas.quota_P2" type="number" class="form-control" id="quotaP2" :disabled="isEngineer"/>
+                  <input v-model="slaQuotas.quota_P2" type="number" class="form-control" id="quotaP2" :disabled="isEngineer" required/>
                 </div>
                 <div class="mt-3">
                   <label for="quotaP3" class="form-label">P3 Quota (Moderate)</label>
-                  <input v-model="slaQuotas.quota_P3" type="number" class="form-control" id="quotaP3" :disabled="isEngineer"/>
+                  <input v-model="slaQuotas.quota_P3" type="number" class="form-control" id="quotaP3" :disabled="isEngineer" required/>
                 </div>
                 <div class="mt-3">
                   <label for="quotaP4" class="form-label">P4 Quota (Low)</label>
-                  <input v-model="slaQuotas.quota_P4" type="number" class="form-control" id="quotaP4" :disabled="isEngineer"/>
+                  <input v-model="slaQuotas.quota_P4" type="number" class="form-control" id="quotaP4" :disabled="isEngineer" required/>
                 </div>
                 <button type="submit" class="btn btn-primary mt-3">Save SLA changes</button>
               </form>
