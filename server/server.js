@@ -21,8 +21,9 @@ const indexRouter = require('./routes/index');
 const usersRouter = require('./routes/users');
 const authRouter = require('./routes/auth');
 const handoverTemplate = require('./template-page.json');
+const rateLimit = require('express-rate-limit');
 const isAuthenticated = require('./auth/isAuthenticated');
-
+const helmet = require('helmet');
 const app = express();
 const server = http.createServer(app);
 const io = new Server(server, {
@@ -31,9 +32,9 @@ const io = new Server(server, {
     methods: ['GET', 'POST'],
     credentials: true
   },
-  transports: ['websocket'], // Ensure WebSocket is prioritized
-  allowEIO3: true,  // Allow Engine.IO version 3 for compatibility
-  debug: true      // Enable debug mode for more logging
+  transports: ['websocket'],
+  allowEIO3: true,
+  debug: true
 });
 
 const redisClient = redis.createClient({
@@ -76,6 +77,7 @@ app.use(cors({
 
 app.use(express.json());
 app.use(cookieParser());
+app.use(helmet());
 app.use(express.urlencoded({ extended: false }));
 
 app.use(session({
@@ -89,10 +91,17 @@ app.use(session({
   }
 }));
 
-
+// Define a general rate limiter for all API requests
+const apiLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, 
+  max: 200, 
+  message: 'Too many requests from this IP, please try again later.',
+  standardHeaders: true, 
+  legacyHeaders: false, 
+});
 
 app.use(express.static(path.join(__dirname, '../client/dist')));
-app.use('/api', isAuthenticated);
+app.use('/api', isAuthenticated, apiLimiter);
 app.use('/', indexRouter);
 app.use('/users', usersRouter);
 app.use('/auth', authRouter);
@@ -239,7 +248,6 @@ app.get('/api/search', async (req, res) => {
     }
   } catch (error) {
     console.error('Failed to fetch search results:', error);
-    //res.status(500).json({ error: error.message });
   }
 });
 
