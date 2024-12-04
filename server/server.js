@@ -222,10 +222,10 @@ app.get('/api/search', async (req, res) => {
         SELECT c.id, c.title
         FROM c
         WHERE 
-          EXISTS (SELECT VALUE i FROM i IN c.records.incidents WHERE i.incNumber = @searchQuery) OR
-          EXISTS (SELECT VALUE chg FROM chg IN c.records.changes WHERE chg.chgNumber = @searchQuery) OR
-          EXISTS (SELECT VALUE prb FROM prb IN c.records.problems WHERE prb.prbNumber = @searchQuery) OR
-          EXISTS (SELECT VALUE sr FROM sr IN c.records.serviceRequests WHERE sr.ritmNumber = @searchQuery) OR
+          EXISTS (SELECT VALUE i FROM i IN c.records.incidents WHERE LOWER(i.incNumber) = @searchQuery) OR
+          EXISTS (SELECT VALUE chg FROM chg IN c.records.changes WHERE LOWER(chg.chgNumber) = @searchQuery) OR
+          EXISTS (SELECT VALUE prb FROM prb IN c.records.problems WHERE LOWER(prb.prbNumber) = @searchQuery) OR
+          EXISTS (SELECT VALUE sr FROM sr IN c.records.serviceRequests WHERE LOWER(sr.ritmNumber) = @searchQuery) OR
           EXISTS (SELECT VALUE mainPrbInc FROM mainPrbInc IN c.records.incidents WHERE Contains(LOWER(mainPrbInc.mainProblem), @searchQuery)) OR
           EXISTS (SELECT VALUE notesInc FROM notesInc IN c.records.incidents WHERE Contains(LOWER(notesInc.notes), @searchQuery)) OR
           EXISTS (SELECT VALUE notesPrb FROM notesPrb IN c.records.problems WHERE Contains(LOWER(notesPrb.notes), @searchQuery)) OR
