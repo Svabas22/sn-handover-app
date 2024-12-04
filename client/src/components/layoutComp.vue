@@ -20,6 +20,6 @@
   
   <style scoped>
   .main-content {
-    padding-top: 56px; /* Adjust if needed based on the height of your navbar */
+    padding-top: 56px;
   }
   </style>

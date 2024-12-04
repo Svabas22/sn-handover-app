@@ -10,7 +10,7 @@ const store = createStore({
     pages: [],
     shifts: [],
     currentPage: {
-      lastEditedBy: '', // Track the last editor
+      lastEditedBy: '',
       version: null
     },
     toasts: [],
@@ -24,7 +24,7 @@ const store = createStore({
     lockedPageId: null,
     clients: [],
     slaQuotas: {},
-    lastUpdateSource: 'server', // Track the source of the last update
+    lastUpdateSource: 'server',
   },
   mutations: {
     setPages(state, pages) {
@@ -34,7 +34,7 @@ const store = createStore({
       state.currentPage = {
         ...page,
         lastEditedBy: page.lastEditedBy || 'Unknown',
-        version: page.version || new Date().toISOString(), // Set the page version
+        version: page.version || new Date().toISOString(),
       };
     },
     updatePageVersion(state, version) {
@@ -75,7 +75,7 @@ const store = createStore({
       state.slaQuotas[clientId] = quotas;
     },
     updateSLAQuotas(state, { clientId, quotas }) {
-      state.slaQuotas[clientId] = quotas; // Update the specific SLA quotas for the client
+      state.slaQuotas[clientId] = quotas;
     },
     addToast(state, toast) {
       const id = state.toastId++;
@@ -126,7 +126,7 @@ const store = createStore({
         });
   
         if (response.ok) {
-          commit('deletePage', pageId);  // Update Vuex state immediately
+          commit('deletePage', pageId);
           
         } else {
           const errorText = await response.text();
@@ -201,13 +201,10 @@ const store = createStore({
           socket.emit('viewPage', { pageId: data.id });
           previousPageId = data.id;
 
-          // Remove the previous listener before adding a new one
           if (currentListener) {
             console.log('Removing previous usersOnPage listener');
             socket.off('usersOnPage', currentListener);
           }
-
-          // Attach a new listener
           currentListener = (users) => {
             console.log('Users on page event received:', users);
             commit('setUsersOnPage', users);
@@ -270,7 +267,6 @@ const store = createStore({
         if (!response.ok) {
           throw new Error(`HTTP error! status: ${response.status}`);
         }
-        //commit('addPage', newPage);
         commit('setCurrentPage', newPage);
         
       } catch (error) {
@@ -283,9 +279,9 @@ const store = createStore({
       try {
         const response = await fetch('/api/copy-template', { method: 'POST', credentials: 'include' });
         const newPage = await response.json();
-        //commit('addPage', newPage);
+
         commit('setCurrentPage', newPage);
-        //commit('addToast', { message: 'New template created successfully.', type: 'success' });
+        
       } catch (error) {
         console.error('Error creating handover from template:', error);
         commit('addToast', { message: `Create template error: ${error.message}`, type: 'danger' });
@@ -376,20 +372,18 @@ const store = createStore({
       try {
         const response = await fetch(`/api/clients/${clientId}`, { credentials: 'include' });
         
-        // Check the raw response first
         const rawData = await response.text();
-        console.log('Raw response:', rawData);  // This will help us see what's returned
+        console.log('Raw response:', rawData);
     
         if (!response.ok) {
           throw new Error('Failed to fetch client SLA quotas');
         }
-    
-        // If rawData is empty or incomplete, check why before parsing
+
         if (!rawData) {
           throw new Error('No data returned from the server');
         }
     
-        const clientData = JSON.parse(rawData); // Parse only if the response is valid
+        const clientData = JSON.parse(rawData);
         commit('setClientSLAQuotas', clientData.slaQuotas);
         return clientData;
       } catch (error) {
@@ -429,7 +423,6 @@ const store = createStore({
         });
     
         if (response.status === 409) {
-          // Handle duplicate client error
           commit('addToast', { message: 'Client with this name already exists.', type: 'danger' });
           return;
         }
@@ -444,29 +437,26 @@ const store = createStore({
       } catch (error) {
         console.error('Error adding new client:', error);
         commit('addToast', { message: 'Failed to add new client', type: 'error' });
-        throw error; // rethrow the error if additional handling is needed elsewhere
+        throw error; 
       }
     }           
   },
 });
 
 
-//let socketId = null;
 socket.on('connect', () => {
   console.log('Socket.io connected');
 });
 
 socket.on('disconnect', () => {
   console.log('Socket.io disconnected');
-  socket.connect(); // Attempt reconnect
+  socket.connect();
 });
 
-//socket.removeAllListeners('usersOnPage');
 socket.on('usersOnPage', (users) => {
   store.commit('setUsersOnPage', users);
 });
 
-// Global toast notification for page creation
 socket.on('pageCreated', (data) => {
   console.log('Page created event received:', data);
   const pageExists = store.state.pages.some(page => page.id === data.id);
@@ -475,10 +465,10 @@ socket.on('pageCreated', (data) => {
     store.commit('addToast', { message: 'Handover copied successfully.', type: 'success' });
   }
 });
-// Global toast notification for page updates
+
 socket.on('pageUpdated', (data) => {
   console.log('Page updated event received:', data);
-  if (store.state.lastUpdateSource !== 'client') { // Only update if not from client
+  if (store.state.lastUpdateSource !== 'client') {
     store.commit('updatePage', data);
     if (store.state.currentPage && store.state.currentPage.id === data.id) {
       store.commit('setCurrentPage', data);
@@ -486,7 +476,7 @@ socket.on('pageUpdated', (data) => {
     }
   }
   store.commit('addToast', { message: `Page ${data.title} updated`, type: 'success' });
-  store.commit('setLastUpdateSource', 'server'); // Reset to server after handling
+  store.commit('setLastUpdateSource', 'server');
 });
 
 socket.removeAllListeners('pageDeleted');

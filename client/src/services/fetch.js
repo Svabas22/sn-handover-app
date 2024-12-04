@@ -2,7 +2,7 @@ async function fetchUser() {
     try {
         const response = await fetch('/auth/user', {
             method: 'GET',
-            credentials: 'include' // Include cookies with the request
+            credentials: 'include'
         });
 
         if (!response.ok) {

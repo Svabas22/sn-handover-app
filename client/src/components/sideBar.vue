@@ -66,7 +66,7 @@ export default {
     },
     createNewHandoverWithData() {
       this.debouncedCopyHandover().then((newPage) => {
-        //this.$socket.emit('createPage', { ...newPage, createdBy: this.socketId });
+      
         this.setCurrentPage(newPage);
       }).catch((error) => {
         this.addToast({ message: `Error: ${error.message}`, type: 'danger' });
@@ -75,8 +75,6 @@ export default {
     createNewTemplateHandover() {
       this.debouncedCreateHandoverTemplate()
       .then((newPage) => {
-        
-        //this.$socket.emit('createPage', { ...newPage, createdBy: this.socketId });
 
         this.setCurrentPage(newPage);
       })
@@ -93,10 +91,8 @@ export default {
 
     this.$socket.on('pageCreated', (newPage) => {
       if (newPage.createdBy !== this.socketId) {
-        // If the user did not create the page, just show a toast
         this.addToast({ message: 'A new handover page was created.', type: 'success' });
       } else {
-        // If the current user created the page, set it as currentPage
         this.setCurrentPage(newPage);
       }
     });
@@ -115,11 +111,11 @@ export default {
 </script>
 
 
-<style lang="scss" scoped>
+<style lang="scss">
 .sidebar-comp {
   position: fixed;
   left: 0;
-  height: 100%;
+  height: 100vh;
   width: 280px;
   box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
   display: flex;
@@ -131,6 +127,8 @@ export default {
 }
 .nav-pills-wrapper {
   flex-grow: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
 }
 .nav-link {
   transition: background-color 0.3s, color 0.3s;
@@ -163,6 +161,6 @@ export default {
   position: fixed;
   bottom: 0;
   right: 0;
-  z-index: 1050; // Ensures it's above most other elements
+  z-index: 1050;
 }
 </style>

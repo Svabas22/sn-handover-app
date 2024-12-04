@@ -52,7 +52,6 @@ redisClient.on('error', (err) => {
   console.log('Redis error: ', err);
 });
 
-// Redis client for subscribing to channels
 const redisSubscriber = redisClient.duplicate();
 
 async function initRedisSubscriber() {
@@ -72,7 +71,7 @@ app.use(cors({
   origin: allowedOrigins,
   methods: ['GET', 'POST', 'PUT', 'DELETE'],
   credentials: true,
-  optionsSuccessStatus: 200 // For legacy browser support
+  optionsSuccessStatus: 200
 }));
 
 app.use(express.json());
@@ -91,7 +90,6 @@ app.use(session({
   }
 }));
 
-// Define a general rate limiter for all API requests
 const apiLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, 
   max: 200, 
@@ -148,12 +146,11 @@ io.on('connection', (socket) => {
     }
 
     usersOnPages[pageId].push({ socketId, userName, pageId });
-    socket.join(pageId); // Join the user to the page-specific room
+    socket.join(pageId);
     console.log('Users on page after viewPage:', usersOnPages[pageId]);
     io.to(pageId).emit('usersOnPage', usersOnPages[pageId]);
   });
   socket.on('leavePage', ({ pageId }) => {
-    // Remove the user from the page
     if (usersOnPages[pageId]) {
       usersOnPages[pageId] = usersOnPages[pageId].filter(user => user.socketId !== socket.id);
       io.to(pageId).emit('usersOnPage', usersOnPages[pageId]);
@@ -185,7 +182,7 @@ io.on('connection', (socket) => {
   socket.on('deletePage', ({ id, title }) => {
     console.log(`Page deleted: ${id} - ${title}`);
     io.emit('pageDeleted', { id, title });
-    delete usersOnPage[id]; // Clean up users tracking
+    delete usersOnPage[id];
   });
   socket.on('disconnect', () => {
     console.log('Client disconnected');
@@ -206,7 +203,7 @@ io.on('connection', (socket) => {
 
 app.post('/api/real-time-updates', (req, res) => {
   const changes = req.body;
-  console.log('Received real-time updates:', changes); // Add logging
+  console.log('Received real-time updates:', changes);
   changes.forEach(change => {
     redisClient.publish('page_updates', JSON.stringify(change));
   });
@@ -370,7 +367,7 @@ app.put('/api/records/:id', async (req, res) => {
 
     const updatedDocument = {
       ...updatedData,
-      lastEditedBy, // Include lastEditedBy in the updated document
+      lastEditedBy, 
     };
     const partitionKey = updatedDocument.pageId;
     const { resource: doc } = await container.item(pageId, partitionKey).replace(updatedDocument);
@@ -509,7 +506,7 @@ app.get('/api/clients/:clientId', async (req, res) => {
 
     const { resource: client } = await clientsContainer.item(clientId).read();
     
-    // Log the result for debugging
+    
     if (!client) {
       console.error('No client found with the specified ID:', clientId);
       return res.status(404).json({ error: 'Client not found' });
@@ -517,7 +514,7 @@ app.get('/api/clients/:clientId', async (req, res) => {
 
     console.log('Fetched client data:', client);
 
-    res.status(200).json(client); // Ensure this is sending proper JSON
+    res.status(200).json(client);
   } catch (error) {
     console.error('Error fetching client SLA quotas:', error.message);
     res.status(500).json({ error: error.message });
@@ -537,7 +534,7 @@ app.put('/api/clients/:clientId', async (req, res) => {
       return res.status(404).json({ error: 'Client not found' });
     }
 
-    existingClient.slaQuotas = slaQuotas; // Update the SLA quotas
+    existingClient.slaQuotas = slaQuotas;
 
     const { resource: updatedClient } = await clientsContainer.item(clientId).replace(existingClient);
     
@@ -573,9 +570,9 @@ app.post('/api/clients', async (req, res) => {
       return res.status(409).json({ error: 'A client with this name already exists.' });
     }
 
-    // Add new client to Cosmos DB
+    
     const { resource: createdClient } = await clientsContainer.items.create(newClient);
-    res.status(201).json(createdClient); // Send back the created client data as confirmation
+    res.status(201).json(createdClient); 
     io.emit('clientCreated', createdClient);
   } catch (error) {
     console.error('Error creating new client:', error);

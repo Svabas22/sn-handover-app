@@ -19,7 +19,7 @@ class AuthProvider {
 
             const { verifier, challenge } = await this.cryptoProvider.generatePkceCodes();
 
-            // Store in session
+
             req.session.pkceCodes = {
                 verifier,
                 challenge,
@@ -153,7 +153,7 @@ class AuthProvider {
             };
             req.session.authCodeUrlRequest = {
                 ...authCodeUrlRequestParams,
-                responseMode: msal.ResponseMode.FORM_POST, // recommended for confidential clients
+                responseMode: msal.ResponseMode.FORM_POST,
                 codeChallenge: req.session.pkceCodes.challenge,
                 codeChallengeMethod: req.session.pkceCodes.challengeMethod,
             };
@@ -173,7 +173,7 @@ class AuthProvider {
     }
 
     /**
-     * Retrieves cloud discovery metadata from the /discovery/instance endpoint
+     * 
      * @returns 
      */
     async getCloudDiscoveryMetadata(authority) {

@@ -73,7 +73,6 @@ export default {
 
       latestPage.records.incidents.forEach(incident => {
         if (incident.status !== 'Resolved') {
-          // Group incidents by client name
           if (!incidentsByClient[incident.client]) {
             incidentsByClient[incident.client] = [];
             slaQuotaPromises.push(this.loadClientSLAQuotas(incident.client));
@@ -88,7 +87,7 @@ export default {
       modal.show();
     },
     async loadClientSLAQuotas(clientName) {
-      const clientId = this.$store.state.clientNameToIdMap[clientName]; // Get clientId using clientName
+      const clientId = this.$store.state.clientNameToIdMap[clientName];
       
       if (clientId && !this.slaQuotasByClient[clientName]) {
         const clientData = await this.fetchClientSLAQuotas(clientId); 
@@ -96,7 +95,7 @@ export default {
           this.slaQuotasByClient[clientName] = clientData.slaQuotas;
         } else {
           this.slaQuotasByClient[clientName] = {
-            quota_P1: 180, // Default values if not found in DB
+            quota_P1: 180,
             quota_P2: 480,
             quota_P3: 1440,
             quota_P4: 2400
@@ -122,7 +121,7 @@ export default {
 
       const openDate = new Date(incident.dateOpened);
       const currentDate = new Date();
-      const elapsedTime = (currentDate - openDate) / (1000 * 60); // Time in minutes
+      const elapsedTime = (currentDate - openDate) / (1000 * 60);
       const progress = Math.min((elapsedTime / slaTime) * 100, 100);
       
       return progress.toFixed(2);

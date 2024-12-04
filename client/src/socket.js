@@ -4,7 +4,7 @@ const socket = io(window.location.hostname === 'localhost'
   ? 'http://localhost:3000' 
   : 'https://sn-handover-app.azurewebsites.net', 
 {
-  transports: ['websocket'],  // Use WebSocket as the transport
+  transports: ['websocket'], 
   withCredentials: true
 });
 

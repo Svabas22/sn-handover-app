@@ -98,7 +98,7 @@ export default {
     ...mapActions(['debouncedPerformSearch', 'fetchPageDetails']),
     loadPage(pageId) {
       this.fetchPageDetails(pageId);
-      this.clearSearchResults(); // Hide search results after selection
+      this.clearSearchResults();
     },
     performSearch() {
       this.$store.dispatch('debouncedPerformSearch', this.searchTerm);
@@ -110,7 +110,7 @@ export default {
       this.$refs.settingsModal.openSettingsModal();
     },
     clearSearchResults() {
-      this.$store.commit('setSearchResults', []); // Clear search results
+      this.$store.commit('setSearchResults', []);
     },
     handleClickOutside(event) {
       if (!this.$el.contains(event.target)) {

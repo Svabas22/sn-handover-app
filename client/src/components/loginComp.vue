@@ -8,7 +8,7 @@
 export default {
   methods: {
     login() {
-      window.location.href = '/auth/signin'; // Redirect to your Express server's sign-in route
+      window.location.href = '/auth/signin';
     }
   }
 }

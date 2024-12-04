@@ -57,7 +57,7 @@
                   <label for="newQuotaP1" class="form-label">P1 Quota (Critical)</label>
                   <input v-model="newClientQuotas.quota_P1" type="number" class="form-control" id="newQuotaP1" required />
                 </div>
-                <div class="mt-3">
+                <div class="mt-3">  
                   <label for="newQuotaP2" class="form-label">P2 Quota (High)</label>
                   <input v-model="newClientQuotas.quota_P2" type="number" class="form-control" id="newQuotaP2" required />
                 </div>
@@ -147,7 +147,7 @@ export default {
         const clientSLAData = await this.$store.dispatch('fetchClientSLAQuotas', this.selectedClientId);
         if (clientSLAData) {
           this.slaQuotas = clientSLAData.slaQuotas;
-          console.log('SLA Quotas fetched:', this.slaQuotas); // Debugging log
+          console.log('SLA Quotas fetched:', this.slaQuotas);
         }
       } catch (error) {
         this.addToast({ message: 'Failed to fetch SLA Quotas', type: 'danger' });
@@ -196,15 +196,13 @@ export default {
         };
 
         await this.$store.dispatch('createNewClient', newClient);
-
-        // Reset new client form
         this.newClientName = '';
         this.newClientQuotas = { quota_P1: '', quota_P2: '', quota_P3: '', quota_P4: '' };
 
-        // Refresh clients list
+
         this.fetchClients();
       } catch (error) {
-        // This catch block handles any unexpected errors not covered in `createNewClient`
+        
         console.error('Error adding new client:', error);
         this.addToast({ message: 'Failed to add new client', type: 'danger' });
       }

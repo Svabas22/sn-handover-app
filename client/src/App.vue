@@ -1,9 +1,7 @@
 <template>
   <div id="app">
-    <!-- Router view for dynamic page rendering -->
     <router-view />
 
-    <!-- Global Toast Container -->
     <div class="toast-container position-fixed bottom-0 end-0 p-3">
       <div v-for="toast in toasts" :key="toast.id" :data-id="toast.id" class="toast" :class="`bg-${toast.type}`">
         <div class="d-flex">
@@ -32,7 +30,7 @@ export default {
     this.checkAuthentication();
   },
   computed: {
-    ...mapState(['toasts']) // Map toast state from Vuex
+    ...mapState(['toasts'])
   },
   watch: {
     toasts: {
@@ -47,10 +45,8 @@ export default {
   },
   methods: {
     checkAuthentication() {
-      // Check authentication status (simplified for example purposes)
       this.isAuthenticated = localStorage.getItem('userAuthenticated') ? true : false;
 
-      // Redirect if not authenticated
       if (!this.isAuthenticated) {
         this.$router.push('/login');
       }
@@ -93,7 +89,7 @@ button {
   position: fixed;
   bottom: 0;
   right: 0;
-  z-index: 1050; /* High z-index to ensure it's above other content */
+  z-index: 1050; 
   padding: 1rem;
   width: auto;
   color: white;

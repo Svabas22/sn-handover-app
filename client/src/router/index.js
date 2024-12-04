@@ -1,6 +1,5 @@
 import { createRouter, createWebHistory } from 'vue-router';
 import Login from '../components/loginComp.vue';
-//import Shifts from '../components/shiftsComp.vue';
 import Home from '../components/homeComp.vue';
 
 
@@ -21,9 +20,9 @@ router.beforeEach((to, from, next) => {
   if (to.matched.some(record => record.meta.requiresAuth) && !isAuthenticated) {
       next('/login');
   } else if (to.path === '/login' && isAuthenticated) {
-      next('/');  // Redirect to the root or dashboard if already authenticated
+      next('/');
   } else {
-      next();  // Proceed as normal
+      next();
   }
 });
 

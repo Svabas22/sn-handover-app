@@ -718,13 +718,11 @@ export default {
     async toggleEditMode() {
 
       if (this.editMode) {
-        // If saving, update the page details and unlock it for others
         if (this.hasChanges()) {
           await this.debouncedUpdatePageDetails({ page: this.currentPage, source: this.$socket.id });
         }
         await this.$store.dispatch('debouncedUnlockEditMode', { pageId: this.currentPage.id, pageTitle: this.currentPage.title, userName: this.userProfile.name });
       } else {
-        // If entering edit mode, lock the page for others
         if (!this.isLocked) {
           await this.$store.dispatch('debouncedLockEditMode', { pageId: this.currentPage.id, pageTitle: this.currentPage.title, userName: this.userProfile.name });
         }
@@ -821,7 +819,7 @@ export default {
         case 1:
           return "P1 - Critical";
         default:
-          return ""; // Default priority if undefined
+          return "";
       }
     },
 
@@ -843,7 +841,7 @@ export default {
         case 1:
           return "New";
         default:
-          return ""; // Default state if undefined
+          return "";
       }
     },
 
@@ -866,23 +864,20 @@ export default {
           const newIncident = {
             client: this.selectedClient,
             incNumber: record.number || '',
-            status: this.mapIncidentState(record.incident_state), // Hardcoded for now
+            status: this.mapIncidentState(record.incident_state),
             dateOpened: record.opened_at || '',
             priority: this.getPriorityLabel(record.priority), 
             mainProblem: record.short_description || 'No description',
-            notes: 'Test note', // Hardcoded note
+            notes: 'Test note',
           };
-          // Add the mapped record to the incidents array
           if (!this.recordExists(this.currentPage.records.incidents, 'incNumber', newIncident.incNumber)) {
             this.currentPage.records.incidents.push(newIncident);
           }
         });
 
-        // Update the page details after importing the records
         await this.debouncedUpdatePageDetails({ page: this.currentPage, source: this.$socket.id });
         this.addToast({ message: `Incidents imported successfully`, type: 'success' });
 
-        // Reset data and close modal
         this.jsonData = null;
         this.clientName = '';
         this.currentImportType = '';
@@ -910,12 +905,12 @@ export default {
         console.log('Importing problems:', this.jsonData);
         this.jsonData.records.forEach(record => {
           const newProblem = {
-            client: this.selectedClient, // Use the client name entered by the user
-            prbNumber: record.number || '', // Map "number"s to "prbNumber", defaulting if missing
-            status: 'Evaluate', // Hardcoded for now
-            priority: this.getPriorityLabel(record.priority), // Hardcoded priority for demo
-            rca: record.short_description || '', // Map "short_description" to "mainProblem"
-            notes: 'Test note', // Hardcoded note
+            client: this.selectedClient, 
+            prbNumber: record.number || '',
+            status: 'Evaluate',
+            priority: this.getPriorityLabel(record.priority),
+            rca: record.short_description || '',
+            notes: 'Test note',
           };
 
           if (!this.recordExists(this.currentPage.records.problems, 'prbNumber', newProblem.prbNumber)) {
@@ -923,11 +918,9 @@ export default {
           }
         });
 
-        // Update the page details after importing the records
         await this.debouncedUpdatePageDetails({ page: this.currentPage, source: this.$socket.id });
         this.addToast({ message: `Incidents imported successfully`, type: 'success' });
 
-        // Reset data and close modal
         this.jsonData = null;
         this.clientName = '';
         this.currentImportType = '';
@@ -952,9 +945,9 @@ export default {
         console.log('Importing changes:', this.jsonData);
         this.jsonData.records.forEach(record => {
           const newChange = {
-            client: this.selectedClient, // Use the client name entered by the user
-            chgNumber: record.number || '', // Map "number"s to "prbNumber", defaulting if missing
-            status: 'Authorize', // Hardcoded for now
+            client: this.selectedClient,
+            chgNumber: record.number || '',
+            status: 'Authorize',
             startDate: record.start_date || '',
             endDate: record.end_date || '',
             notes: record.short_description || ''
@@ -965,11 +958,9 @@ export default {
           }
         });
 
-        // Update the page details after importing the records
         await this.debouncedUpdatePageDetails({ page: this.currentPage, source: this.$socket.id });
         this.addToast({ message: `Incidents imported successfully`, type: 'success' });
 
-        // Reset data and close modal
         this.jsonData = null;
         this.clientName = '';
         this.currentImportType = '';
@@ -1006,11 +997,9 @@ export default {
           }
         });
 
-        // Update the page details after importing the records
         await this.debouncedUpdatePageDetails({ page: this.currentPage, source: this.$socket.id });
         this.addToast({ message: `Incidents imported successfully`, type: 'success' });
 
-        // Reset data and close modal
         this.jsonData = null;
         this.clientName = '';
         this.currentImportType = '';
@@ -1024,7 +1013,7 @@ export default {
     //--Problem addition--
     async saveProblem() {
       const newProblem = {
-        client: this.newProblem.client, // Store client info directly in the problem
+        client: this.newProblem.client,
         prbNumber: this.newProblem.prbNumber,
         status: this.newProblem.status,
         priority: this.newProblem.priority,
@@ -1036,7 +1025,6 @@ export default {
 
       try {
         await this.debouncedUpdatePageDetails({ page: this.currentPage, source: this.$socket.id });
-        //this.$socket.emit('editPage', this.currentPage);
         this.resetNewProblem();
         this.$router.push({ name: 'HomePage' });
       } catch (error) {
@@ -1057,7 +1045,7 @@ export default {
     //--Change addition--
     async saveChange() {
       const newChange = {
-        client: this.newChange.client, // Store client info directly in the change
+        client: this.newChange.client,
         chgNumber: this.newChange.chgNumber,
         status: this.newChange.status,
         startDate: this.newChange.startDate,
@@ -1069,7 +1057,6 @@ export default {
 
       try {
         await this.debouncedUpdatePageDetails({ page: this.currentPage, source: this.$socket.id });
-        //this.$socket.emit('editPage', this.currentPage);
         this.resetNewChange();
       } catch (error) {
         console.error('Error saving change:', error);
@@ -1089,7 +1076,7 @@ export default {
     //--Request addition--
     async saveRequest() {
       const newRequest = {
-        client: this.newRequest.client, // Store client info directly in the service request
+        client: this.newRequest.client, 
         ritmNumber: this.newRequest.ritmNumber,
         status: this.newRequest.status,
         short_description: this.newRequest.short_description,
@@ -1100,7 +1087,6 @@ export default {
 
       try {
         await this.debouncedUpdatePageDetails({ page: this.currentPage, source: this.$socket.id });
-        //this.$socket.emit('editPage', this.currentPage);
         this.resetNewRequest();
       } catch (error) {
         console.error('Error saving service request:', error);
@@ -1127,15 +1113,12 @@ export default {
         return;
       }
       
-      // Check if other users are viewing the page
       const otherUsers = this.usersOnPage.filter(user => user.socketId !== this.$socket.id);
       console.log("Other users on page:", this.usersOnPage);
-      // First confirmation for deleting the page
       if (!confirm(`Are you sure you want to delete "${pageTitle}"? This action cannot be undone.`)) {
         return;
       }
 
-      // If other users are viewing the page, show another confirmation dialog
       if (otherUsers.length > 0) {
         const usernames = otherUsers.map(user => user.username || 'another user').join(', ');
         const confirmMessage = `Other users (${usernames}) are also viewing this page. Are you sure you want to delete it?`;
@@ -1166,20 +1149,15 @@ export default {
     handlePageUpdated(data) {
       console.log('Page updated event received:', data);
 
-      // Check if the current page is the one being updated and if the version has changed
       if (this.currentPage && this.currentPage.id === data.id) {
         if (this.currentPage.version !== data.version) {
           console.log('Version conflict detected.');
-
-          // Notify the user about the conflict and prompt to reload
           if (confirm("This page has been updated by another user. Would you like to reload the latest version?")) {
-            this.fetchPageDetails(data.id); // Fetch and reload the latest version of the page
+            this.fetchPageDetails(data.id);
           } else {
-            // Optionally, you could add a toast notification for users who choose not to reload
             this.addToast({ message: 'You are viewing an outdated version of the page.', type: 'warning' });
           }
         } else {
-          // If there’s no version conflict, update the current page as usual
           this.setCurrentPage(data);
           console.log('Current page updated without conflict.');
         }
@@ -1187,7 +1165,7 @@ export default {
     }
   },
   created() {
-    //const docId = this.currentPage.id;
+
     const docId = this.$route.params.id;
     this.fetchShifts();
     this.fetchClients();
@@ -1224,18 +1202,18 @@ export default {
 .main-container {
   display: block;
   width: 100%;
-  max-height: calc(100vh - 70px);  /* Adjust the height by subtracting the height of your navbar */
-  overflow-y: auto;  /* Enables vertical scrolling inside the main-container */
+  max-height: calc(100vh - 70px);
+  overflow-y: auto;
 }
 
 .header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  position: sticky;  /* Makes the header sticky */
-  top: 0;  /* Stick to the top of the main-container */
-  background: white;  /* Background color to ensure text is readable */
-  z-index: 10;  /* Higher index to keep it above other content */
+  position: sticky;
+  top: 0;
+  background: white;
+  z-index: 10;
 }
 
 .bi-three-dots-vertical, .bi-plus-lg, .bi-upload {
@@ -1250,7 +1228,7 @@ export default {
 .dropwdowns-opt {
   display: flex;
   color: rgb(0, 0, 0);
-  gap: 10px;  /* Maintain spacing between buttons */
+  gap: 10px;
 }
 
 .dropwdowns-opt.disabled, 
@@ -1273,27 +1251,27 @@ export default {
 .table-fixed th, .table-fixed td {
   overflow: hidden;
   text-overflow: ellipsis;
-  white-space: nowrap;  /* Ensures no text wrap in table cells */
+  white-space: nowrap;
 }
 
 .table-fixed th:last-child, .table-fixed td:last-child {
-  white-space: normal;  /* Allows text wrapping in the last column */
+  white-space: normal;
 }
 
 .table-fixed th.main-problem, .table-fixed td.main-problem,
 .table-fixed th.short-request-description, .table-fixed td.short-request-description {
-  white-space: normal; /* Allows text wrapping */
-  word-wrap: break-word; /* Wraps long words */
-  overflow: visible; /* Ensures the full text is visible */
+  white-space: normal;
+  word-wrap: break-word;
+  overflow: visible;
 }
 
 .custom-textarea {
   width: 100%;
   height: auto;
-  resize: both;  /* Allows resizing */
+  resize: both;
   font-size: 1rem;
   padding: 0.5rem;
-  white-space: pre-wrap;  /* Maintains white space formatting */
-  word-wrap: break-word;  /* Wraps long words */
+  white-space: pre-wrap;
+  word-wrap: break-word;
 }
 </style>
