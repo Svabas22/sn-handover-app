@@ -70,7 +70,9 @@
                 <div class="mb-3">
                   <label for="clientSelect" class="form-label">Client</label>
                   <select class="form-select" id="clientSelect" v-model="newIncident.client" required>
-                    <option>Client1</option>
+                    <option v-for="client in clients" :value="client.id" :key="client.id">
+                      {{ client.client }}
+                    </option>
                   </select>
                 </div>
                 <div class="mb-3">
