@@ -858,21 +858,30 @@ export default {
         this.addToast({ message: 'Client selection is required', type: 'danger' });
         return;
       }
-      console.log(this.selectedClient);
 
       try {
         console.log('Importing incidents:', this.jsonData);
+
         this.jsonData.records.forEach(record => {
           const newIncident = {
             client: this.selectedClient,
             incNumber: record.number || '',
             status: this.mapIncidentState(record.incident_state),
             dateOpened: record.opened_at || '',
-            priority: this.getPriorityLabel(record.priority), 
+            priority: this.getPriorityLabel(record.priority),
             mainProblem: record.short_description || 'No description',
             notes: 'Test note',
           };
-          if (!this.recordExists(this.currentPage.records.incidents, 'incNumber', newIncident.incNumber)) {
+
+          const existingIncident = this.currentPage.records.incidents.find(
+            incident => incident.incNumber === newIncident.incNumber
+          );
+
+          if (existingIncident) {
+            // Update existing incident
+            Object.assign(existingIncident, newIncident);
+          } else {
+            // Add new incident
             this.currentPage.records.incidents.push(newIncident);
           }
         });
@@ -905,9 +914,10 @@ export default {
 
       try {
         console.log('Importing problems:', this.jsonData);
+
         this.jsonData.records.forEach(record => {
           const newProblem = {
-            client: this.selectedClient, 
+            client: this.selectedClient,
             prbNumber: record.number || '',
             status: 'Evaluate',
             priority: this.getPriorityLabel(record.priority),
@@ -915,20 +925,28 @@ export default {
             notes: 'Test note',
           };
 
-          if (!this.recordExists(this.currentPage.records.problems, 'prbNumber', newProblem.prbNumber)) {
+          const existingProblem = this.currentPage.records.problems.find(
+            problem => problem.prbNumber === newProblem.prbNumber
+          );
+
+          if (existingProblem) {
+            // Update existing problem
+            Object.assign(existingProblem, newProblem);
+          } else {
+            // Add new problem
             this.currentPage.records.problems.push(newProblem);
           }
         });
 
         await this.debouncedUpdatePageDetails({ page: this.currentPage, source: this.$socket.id });
-        this.addToast({ message: `Incidents imported successfully`, type: 'success' });
+        this.addToast({ message: `Problems imported successfully`, type: 'success' });
 
         this.jsonData = null;
         this.clientName = '';
         this.currentImportType = '';
       } catch (error) {
-        console.error('Error importing incidents:', error);
-        this.addToast({ message: 'Error importing incidents', type: 'danger' });
+        console.error('Error importing problems:', error);
+        this.addToast({ message: 'Error importing problems', type: 'danger' });
       }
     },
     //--Import changes--
@@ -945,6 +963,7 @@ export default {
 
       try {
         console.log('Importing changes:', this.jsonData);
+
         this.jsonData.records.forEach(record => {
           const newChange = {
             client: this.selectedClient,
@@ -955,20 +974,28 @@ export default {
             notes: record.short_description || ''
           };
 
-          if (!this.recordExists(this.currentPage.records.changes, 'chgNumber', newChange.chgNumber)) {
+          const existingChange = this.currentPage.records.changes.find(
+            change => change.chgNumber === newChange.chgNumber
+          );
+
+          if (existingChange) {
+            // Update existing change
+            Object.assign(existingChange, newChange);
+          } else {
+            // Add new change
             this.currentPage.records.changes.push(newChange);
           }
         });
 
         await this.debouncedUpdatePageDetails({ page: this.currentPage, source: this.$socket.id });
-        this.addToast({ message: `Incidents imported successfully`, type: 'success' });
+        this.addToast({ message: `Changes imported successfully`, type: 'success' });
 
         this.jsonData = null;
         this.clientName = '';
         this.currentImportType = '';
       } catch (error) {
-        console.error('Error importing incidents:', error);
-        this.addToast({ message: 'Error importing incidents', type: 'danger' });
+        console.error('Error importing changes:', error);
+        this.addToast({ message: 'Error importing changes', type: 'danger' });
       }
     },
     //--Import Service Requests--
@@ -985,6 +1012,7 @@ export default {
 
       try {
         console.log('Importing service requests:', this.jsonData);
+
         this.jsonData.records.forEach(record => {
           const newRequest = {
             client: this.selectedClient,
@@ -994,20 +1022,28 @@ export default {
             notes: ''
           };
 
-          if (!this.recordExists(this.currentPage.records.serviceRequests, 'ritmNumber', newRequest.ritmNumber)) {
+          const existingRequest = this.currentPage.records.serviceRequests.find(
+            request => request.ritmNumber === newRequest.ritmNumber
+          );
+
+          if (existingRequest) {
+            // Update existing request
+            Object.assign(existingRequest, newRequest);
+          } else {
+            // Add new request
             this.currentPage.records.serviceRequests.push(newRequest);
           }
         });
 
         await this.debouncedUpdatePageDetails({ page: this.currentPage, source: this.$socket.id });
-        this.addToast({ message: `Incidents imported successfully`, type: 'success' });
+        this.addToast({ message: `Service requests imported successfully`, type: 'success' });
 
         this.jsonData = null;
         this.clientName = '';
         this.currentImportType = '';
       } catch (error) {
-        console.error('Error importing incidents:', error);
-        this.addToast({ message: 'Error importing incidents', type: 'danger' });
+        console.error('Error importing service requests:', error);
+        this.addToast({ message: 'Error importing service requests', type: 'danger' });
       }
     },
 
