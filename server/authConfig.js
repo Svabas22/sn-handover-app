@@ -2,7 +2,7 @@ require('dotenv').config();
 
 const msalConfig = {
     auth: {
-        clientId: process.env.AZURE_CLIENT_ID, 
+        clientId: process.env.CLIENT_ID, 
         authority: process.env.CLOUD_INSTANCE + process.env.AZURE_TENANT_ID,
         clientSecret: process.env.AZURE_CLIENT_SECRET
     },

@@ -1,6 +1,6 @@
 const express = require('express');
 const { WebSiteManagementClient } = require("@azure/arm-appservice");
-const { DefaultAzureCredential } = require("@azure/identity");
+const { ManagedIdentityCredential } = require("@azure/identity");
 
 const router = express.Router();
 
@@ -10,7 +10,7 @@ const resourceGroupName = process.env.RESOURCE_GROUP_NAME;
 const functionAppName = process.env.FUNCTION_APP_NAME;
 const functionName = process.env.FUNCTION_NAME;
 
-const credential = new DefaultAzureCredential();
+const credential = new ManagedIdentityCredential();
 const azureWebClient = new WebSiteManagementClient(credential, subscriptionId);
 
 
