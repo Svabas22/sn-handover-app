@@ -21,6 +21,7 @@ const indexRouter = require('./routes/index');
 const usersRouter = require('./routes/users');
 const authRouter = require('./routes/auth');
 const handoverTemplate = require('./template-page.json');
+const disableFunctionRouter = require('./routes/disable-function');
 const rateLimit = require('express-rate-limit');
 const isAuthenticated = require('./auth/isAuthenticated');
 const helmet = require('helmet');
@@ -103,6 +104,7 @@ app.use('/api', isAuthenticated, apiLimiter);
 app.use('/', indexRouter);
 app.use('/users', usersRouter);
 app.use('/auth', authRouter);
+app.use('/', disableFunctionRouter);
 
 
 const endpoint = process.env.COSMOS_DB_ENDPOINT;

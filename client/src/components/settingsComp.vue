@@ -93,11 +93,26 @@
               <form @submit.prevent="saveShiftChanges">
                 <div v-for="(engineer, index) in currentShift.engineers.slice(0, 4)" :key="index" class="mt-3">
                   <label :for="'engineer-' + index" class="form-label">Engineer {{ index + 1 }} name</label>
-                  <input v-model="engineer.name" type="text" class="form-control" :id="'engineer-' + index" placeholder="Enter engineer name" :disabled="isEngineer"/>
+                  <input v-model="engineer.name" type="text" class="form-control" :id="'engineer-' + index" placeholder="Enter engineer name" :disabled="isEngineer" />
                 </div>
                 <button type="submit" class="btn btn-primary mt-3">Save Shift Changes</button>
               </form>
             </div>
+          </div>
+
+          <div class="function-control">
+            <h5>Azure Function Control</h5>
+            <hr />
+            <!-- Toggle Button -->
+            <button
+              @click="toggleFunctionState"
+              :class="functionDisabled ? 'btn btn-danger' : 'btn btn-success'"
+            >
+              {{ functionDisabled ? 'Enable Function' : 'Disable Function' }}
+            </button>
+            <p class="mt-2">
+              Status: <strong>{{ functionDisabled ? 'Disabled' : 'Enabled' }}</strong>
+            </p>
           </div>
 
           <hr />
@@ -125,7 +140,8 @@ export default {
       slaQuotas: { quota_P1: '', quota_P2: '', quota_P3: '', quota_P4: '' },
       newClientName: '',
       newClientQuotas: { quota_P1: '', quota_P2: '', quota_P3: '', quota_P4: '' },
-      userProfile: { role: localStorage.getItem('roles') }
+      userProfile: { role: localStorage.getItem('roles') },
+      functionDisabled: false
     };
   },
   computed: {
@@ -141,7 +157,27 @@ export default {
       const modal = new bootstrap.Modal(document.getElementById('settingsModal'));
       modal.show();
     },
+    async toggleFunctionState() {
+      try {
+        const newState = !this.functionDisabled;
+        const endpoint = '/api/disable-function';
 
+        await fetch(endpoint, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ disable: newState }),
+        });
+
+        this.functionDisabled = newState;
+        this.addToast({
+          message: `Azure Function successfully ${newState ? 'disabled' : 'enabled'}`,
+          type: 'success',
+        });
+      } catch (error) {
+        console.error('Error toggling Azure Function:', error);
+        this.addToast({ message: 'Failed to toggle Azure Function', type: 'danger' });
+      }
+    },
     async fetchSLAQuotas() {
       try {
         const clientSLAData = await this.$store.dispatch('fetchClientSLAQuotas', this.selectedClientId);
@@ -212,9 +248,13 @@ export default {
   mounted() {
     this.$store.dispatch('fetchClients');
     this.$store.dispatch('fetchShifts');
+    this.functionDisabled = false;
   },
 };
 </script>
 
 <style scoped>
+button {
+  width: 150px;
+}
 </style>

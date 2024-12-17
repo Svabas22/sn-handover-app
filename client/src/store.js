@@ -174,6 +174,9 @@ const store = createStore({
         if (!response.ok) {
           throw new Error(`HTTP error! Status: ${response.status}`);
         }
+        if(searchTerm === '') {
+          return;
+        }
         const results = await response.json();
         commit('setSearchResults', results);
       } catch (error) {
