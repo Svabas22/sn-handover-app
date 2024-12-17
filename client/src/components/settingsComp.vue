@@ -159,16 +159,16 @@ export default {
     },
     async toggleFunctionState() {
       try {
-        const newState = !this.functionDisabled;
+        const newState = !this.functionDisabled; // Toggle current state
         const endpoint = '/api/disable-function';
 
         await fetch(endpoint, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ disable: newState }),
+          body: JSON.stringify({ disable: newState }), // Send toggle state
         });
 
-        this.functionDisabled = newState;
+        this.functionDisabled = newState; // Update local state
         this.addToast({
           message: `Azure Function successfully ${newState ? 'disabled' : 'enabled'}`,
           type: 'success',
@@ -176,6 +176,16 @@ export default {
       } catch (error) {
         console.error('Error toggling Azure Function:', error);
         this.addToast({ message: 'Failed to toggle Azure Function', type: 'danger' });
+      }
+    },
+    async fetchFunctionStatus() {
+      try {
+        const response = await fetch('/api/function-status');
+        const data = await response.json();
+        this.functionDisabled = data.disabled;
+      } catch (error) {
+        console.error('Error fetching Azure Function status:', error);
+        this.addToast({ message: 'Failed to fetch Azure Function status', type: 'danger' });
       }
     },
     async fetchSLAQuotas() {
@@ -248,7 +258,8 @@ export default {
   mounted() {
     this.$store.dispatch('fetchClients');
     this.$store.dispatch('fetchShifts');
-    this.functionDisabled = false;
+    //this.functionDisabled = false;
+    this.fetchFunctionStatus();
   },
 };
 </script>
