@@ -38,7 +38,7 @@ const store = createStore({
       };
     },
     updatePageVersion(state, version) {
-      state.currentPage.version = version; // Update version after saving
+      state.currentPage.version = version;
     },
     addPage(state, page) {
       state.pages.push(page);

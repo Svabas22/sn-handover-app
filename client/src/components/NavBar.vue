@@ -21,7 +21,6 @@
           </li>
         </ul>
 
-        <!-- Center the search bar with flex-grow -->
         <form class="d-flex justify-content-center flex-grow-1 mx-3" role="search" @submit.prevent="performSearch">
           <input
             class="form-control w-100"
@@ -165,8 +164,8 @@ li a:hover {
 }
 
 .nav-options {
-  display: flex; /* Flexbox for proper alignment */
-  align-items: center; /* Align items vertically centered */
+  display: flex;
+  align-items: center;
 }
 
 form {

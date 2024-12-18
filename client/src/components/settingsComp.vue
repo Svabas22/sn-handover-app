@@ -161,16 +161,16 @@ export default {
     },
     async toggleFunctionState() {
       try {
-        const newState = !this.functionDisabled; // Toggle current state
+        const newState = !this.functionDisabled;
         const endpoint = '/api/disable-function';
 
         await fetch(endpoint, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ disable: newState }), // Send toggle state
+          body: JSON.stringify({ disable: newState }),
         });
 
-        this.functionDisabled = newState; // Update local state
+        this.functionDisabled = newState;
         this.addToast({
           message: `Azure Function successfully ${newState ? 'disabled' : 'enabled'}`,
           type: 'success',
@@ -260,7 +260,6 @@ export default {
   mounted() {
     this.$store.dispatch('fetchClients');
     this.$store.dispatch('fetchShifts');
-    //this.functionDisabled = false;
     this.fetchFunctionStatus();
   },
 };
