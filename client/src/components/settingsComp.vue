@@ -38,7 +38,7 @@
                   <label for="quotaP4" class="form-label">P4 Quota (Low)</label>
                   <input v-model="slaQuotas.quota_P4" type="number" class="form-control" id="quotaP4" :disabled="isEngineer" required/>
                 </div>
-                <button type="submit" class="btn btn-primary mt-3">Save SLA changes</button>
+                <button type="submit" class="btn btn-primary mt-3">Save SLA Changes</button>
               </form>
             </div>
 
@@ -79,7 +79,7 @@
 
           <!-- Shifts Form -->
           <div class="edit-shift">
-            <h5>Edit Shift details</h5>
+            <h5>Edit Shift Details</h5>
             <hr />
             <label for="shift-select" class="form-label">Select Shift</label>
             <select v-model="selectedShiftId" @change="fetchShiftDetails" id="shift-select" class="form-select">
@@ -98,17 +98,19 @@
                 <button type="submit" class="btn btn-primary mt-3">Save Shift Changes</button>
               </form>
             </div>
+            <hr />
           </div>
 
-          <div class="function-control">
-            <h5>Azure Function Control</h5>
+          <div class="function-control" v-if="isEngineer">
+            <hr />
+            <h5>Automatic Page Copy Control</h5>
             <hr />
             <!-- Toggle Button -->
             <button
               @click="toggleFunctionState"
               :class="functionDisabled ? 'btn btn-danger' : 'btn btn-success'"
             >
-              {{ functionDisabled ? 'Enable Function' : 'Disable Function' }}
+              {{ functionDisabled ? 'Enable Automatic Page Copy' : 'Disable Automatic Page Copy' }}
             </button>
             <p class="mt-2">
               Status: <strong>{{ functionDisabled ? 'Disabled' : 'Enabled' }}</strong>
@@ -265,7 +267,4 @@ export default {
 </script>
 
 <style scoped>
-button {
-  width: 150px;
-}
 </style>

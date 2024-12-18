@@ -45,7 +45,7 @@
                 <a
                   id="remove-btn"
                   href="#"
-                  :class="{ 'dropdown-item': true, 'disabled': !isEngineer || editMode }"
+                  :class="{ 'dropdown-item': true, 'disabled': isEngineer || editMode }"
                   data-bs-toggle="modal"
                   data-bs-target="#removePageModal"
                 >
@@ -70,7 +70,7 @@
                 <div class="mb-3">
                   <label for="clientSelect" class="form-label">Client</label>
                   <select class="form-select" id="clientSelect" v-model="newIncident.client" required>
-                    <option v-for="client in clients" :value="client.id" :key="client.id">
+                    <option v-for="client in clients" :value="client.client" :key="client.client">
                       {{ client.client }}
                     </option>
                   </select>
